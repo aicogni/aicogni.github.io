@@ -178,10 +178,10 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
 
 /* ---------- BUILD SYSTEM ---------- */
 .js-build [data-b]{opacity:0}
-.js-build [data-b].on{opacity:1;animation:reveal .55s cubic-bezier(.2,.7,.2,1) both}
+.js-build [data-b].on{opacity:1;animation:reveal .95s cubic-bezier(.22,.61,.36,1) both}
 @keyframes reveal{
-  0%{clip-path:inset(0 100% 0 0);filter:brightness(2.2) saturate(.2)}
-  60%{filter:brightness(1.3)}
+  0%{clip-path:inset(0 100% 0 0);filter:brightness(1.6) saturate(.4)}
+  70%{filter:brightness(1.1)}
   100%{clip-path:inset(0 0 0 0);filter:none}
 }
 .js-build [data-b].on.instant{animation:none}
@@ -468,7 +468,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
 
   const COLORS = ['#ff6b9a','#ffc93d','#5b8dff','#3dff9a','#b18cff','#ff8a3d','#9db9ff','#ffffff','#3dd5ff'];
   const N = innerWidth < 620 ? 12 : 32;
-  const CONC = innerWidth < 620 ? 4 : 6;
+  const CONC = innerWidth < 620 ? 3 : 5;
   const SCR = 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЭЮЯ0123456789#%&*+=/<>';
 
   document.getElementById('hudDots').innerHTML = COLORS.slice(0,5).map(c=>`<i style="background:${c}"></i>`).join('');
@@ -509,7 +509,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
   // ---------- текстовый «скрэмбл» ----------
   function scramble(el){
     if(el.dataset.orig===undefined) el.dataset.orig=el.textContent;
-    const orig=el.dataset.orig, dur=700, t0=performance.now();
+    const orig=el.dataset.orig, dur=1050, t0=performance.now();
     // готовая часть + «бегущие» 3 символа + невидимый остаток (ширина строки не прыгает)
     const a=document.createTextNode(''), g=document.createElement('span'), h=document.createElement('span');
     g.className='scr-g'; h.className='scr-h';
@@ -543,7 +543,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
       const el=nextPending(); if(!el) break;
       const r=el.getBoundingClientRect();
       const area=r.width*r.height;
-      const dur=Math.min(1500, 620+Math.sqrt(area)*1.6);
+      const dur=Math.min(1700, 760+Math.sqrt(area)*1.7);
       const k=Math.min(free.length, Math.max(3, Math.min(9, Math.round(Math.sqrt(area)/45))));
       // ближайшие свободные агенты
       const cx=r.left, cy=r.top;
@@ -565,13 +565,13 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
   function plus(x,y,c,a,sz){ ctx.globalAlpha=a; ctx.strokeStyle=c; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(x-sz,y); ctx.lineTo(x+sz,y); ctx.moveTo(x,y-sz); ctx.lineTo(x,y+sz); ctx.stroke(); ctx.globalAlpha=1; }
 
   function drawJob(j,r,p){
-    const fade = p>0.78 ? 1-(p-0.78)/0.22 : 1;
-    const g=ease(p/0.38);
+    const fade = p>0.7 ? 1-(p-0.7)/0.3 : 1;
+    const g=ease(p/0.46);
     const w=r.width*g, h=r.height*Math.min(1,g*1.15);
     ctx.globalAlpha=fade;
     // направляющие
     if(j.guides && p>0.08 && p<0.75){
-      const ga=Math.sin((p-0.08)/0.67*Math.PI)*0.75;
+      const ga=Math.sin((p-0.08)/0.67*Math.PI)*0.6;
       ctx.globalAlpha=ga*fade; ctx.strokeStyle='#ff3348'; ctx.lineWidth=1;
       ctx.beginPath(); ctx.moveTo(r.left+.5,0); ctx.lineTo(r.left+.5,H); ctx.moveTo(0,r.top+.5); ctx.lineTo(W,r.top+.5); ctx.stroke();
       ctx.setLineDash([3,4]); ctx.beginPath(); ctx.moveTo(r.right-.5,r.top-40); ctx.lineTo(r.right-.5,r.bottom+40); ctx.stroke(); ctx.setLineDash([]);
@@ -632,13 +632,13 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
       const bx=W/2-15, by=H/2-15; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx,by,30,30,8) : ctx.rect(bx,by,30,30); ctx.fill(); ctx.stroke();
       ctx.strokeStyle='#9db9ff'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(W/2,H/2,7,clock/200,clock/200+4.6); ctx.stroke();
       ctx.globalAlpha=1;
-      if(clock>1500){ state='build'; startClock=0; }
+      if(clock>1700){ state='build'; startClock=0; }
     }
     if(state==='build' && !paused){
       spawnJobs();
       for(let i=jobs.length-1;i>=0;i--){
         const j=jobs[i], p=(clock-j.t0)/j.dur;
-        if(!j.revealed && p>0.34){ j.revealed=true; revealEl(j.el); done++; }
+        if(!j.revealed && p>0.42){ j.revealed=true; revealEl(j.el); done++; }
         if(p>=1){ j.team.forEach(a=>a.job=null); jobs.splice(i,1); }
       }
       if(!pending.length && !jobs.length) finish(false);
@@ -649,35 +649,35 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
     // агенты
     let alive=0;
     agents.forEach((a,i)=>{
-      let tx,ty,k=0.012;
+      let tx,ty,k=0.01;
       if(a.exit){ tx=a.exit.x; ty=a.exit.y; k=0.011; }
       else if(a.job){
         const r=a.job.el.getBoundingClientRect(), p=Math.min(1,(clock-a.job.t0)/a.job.dur);
         const sweep=ease(p*1.25);
         tx=r.left + r.width*(a.u*0.25 + sweep*0.75*(0.4+a.u*0.6));
-        ty=r.top + r.height*(0.15+a.v*0.7) + Math.sin(clock/240+a.ph)*6;
-        k=0.02;
+        ty=r.top + r.height*(0.15+a.v*0.7) + Math.sin(clock/420+a.ph)*5;
+        k=0.015;
       } else if(state==='intro'){
         const ang=clock/600*(i%2?1:-1)+a.ph, rad=40+a.u*70;
-        tx=W/2+Math.cos(ang)*rad; ty=H/2+Math.sin(ang)*rad*0.7; k=0.014;
+        tx=W/2+Math.cos(ang)*rad; ty=H/2+Math.sin(ang)*rad*0.7; k=0.009;
       } else {
         const ang=clock/1400+a.ph, rad=60+a.u*140;
-        tx=hive.x+Math.cos(ang)*rad; ty=hive.y+Math.sin(ang*1.3)*rad*0.6; k=0.006;
+        tx=hive.x+Math.cos(ang)*rad; ty=hive.y+Math.sin(ang*1.3)*rad*0.6; k=0.004;
       }
       if(!paused){
-        a.vx += ((tx-a.x)*k - a.vx*0.16)*f + Math.sin(clock/300+a.ph)*0.06*f;
-        a.vy += ((ty-a.y)*k - a.vy*0.16)*f + Math.cos(clock/330+a.ph)*0.06*f;
+        a.vx += ((tx-a.x)*k - a.vx*0.13)*f + Math.sin(clock/520+a.ph)*0.03*f;
+        a.vy += ((ty-a.y)*k - a.vy*0.13)*f + Math.cos(clock/560+a.ph)*0.03*f;
         a.x += a.vx*f; a.y += a.vy*f;
       }
       const sp=Math.hypot(a.vx,a.vy);
       // нос стрелки смотрит по направлению полёта, в покое — обычный курсор
-      const target = sp>1.2 ? Math.atan2(a.vy,a.vx) - 4.34 : 0;
-      let d=target-a.ang; while(d>Math.PI)d-=Math.PI*2; while(d<-Math.PI)d+=Math.PI*2; a.ang+=d*0.15;
+      const target = sp>0.9 ? Math.atan2(a.vy,a.vx) - 4.34 : 0;
+      let d=target-a.ang; while(d>Math.PI)d-=Math.PI*2; while(d<-Math.PI)d+=Math.PI*2; a.ang+=d*0.07;
       if(a.x>-60&&a.x<W+60&&a.y>-60&&a.y<H+60){ alive++; arrow(a.x,a.y,a.ang,a.c,a.s); }
-      if(a.job && !paused && Math.random()<0.03*f) sparks.push({x:a.x+rnd(-14,14),y:a.y+rnd(-14,14),c:a.c,t:0});
+      if(a.job && !paused && Math.random()<0.018*f) sparks.push({x:a.x+rnd(-14,14),y:a.y+rnd(-14,14),c:a.c,t:0});
     });
     // искры «+»
-    for(let i=sparks.length-1;i>=0;i--){ const s=sparks[i]; s.t+=dt; const a=1-s.t/700; if(a<=0){sparks.splice(i,1);continue;} plus(s.x,s.y-s.t*0.01,s.c,a,3.5); }
+    for(let i=sparks.length-1;i>=0;i--){ const s=sparks[i]; s.t+=dt; const a=1-s.t/1100; if(a<=0){sparks.splice(i,1);continue;} plus(s.x,s.y-s.t*0.01,s.c,a,3.5); }
 
     hudUpdate();
     if(state==='done' && alive===0 && !sparks.length){ /* все улетели */ }
