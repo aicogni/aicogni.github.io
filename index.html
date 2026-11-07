@@ -497,7 +497,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
   function reset(){
     els.forEach(e=>{e.classList.remove('on','instant'); if(e.dataset.orig!==undefined) e.textContent=e.dataset.orig;});
     window.scrollTo(0,0);
-    pending=els.slice(); jobs=[]; sparks=[]; done=0; clock=0; workTime=0; idleSince=0; state='intro'; paused=false;
+    pending=els.filter(e=>{ if(e.getClientRects().length) return true; e.classList.add('on','instant'); return false; }); jobs=[]; sparks=[]; done=els.length-pending.length; clock=0; workTime=0; idleSince=0; state='intro'; paused=false;
     btnPause.textContent='Пауза'; btnPause.style.display=''; btnSkip.textContent='Пропустить'; btnSkip.classList.remove('pri');
     hud.classList.remove('hide');
     makeAgents();
