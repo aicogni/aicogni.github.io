@@ -477,13 +477,14 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
 
   // ---------- состояние ----------
   let agents=[], jobs=[], sparks=[], pending=[], done=0;
-  let workTime=0, clock=0, last=performance.now(), paused=false, state='intro', startClock=0, finishTime=0;
+  let idleSince=0, workTime=0, clock=0, last=performance.now(), paused=false, state='intro', startClock=0, finishTime=0;
   let lastUser=-1e9, autoTarget=null, autoT=0;
   ['wheel','touchstart','keydown'].forEach(ev=>addEventListener(ev,()=>{lastUser=performance.now(); autoTarget=null;},{passive:true}));
 
   const rnd=(a,b)=>a+Math.random()*(b-a);
   const ease=t=>t<0?0:t>1?1:1-Math.pow(1-t,3);
 
+  function exitPoint(){ const side=Math.random()*4|0; return side===0?{x:-40,y:rnd(0,H)}: side===1?{x:W+40,y:rnd(0,H)}: side===2?{x:rnd(0,W),y:-40}:{x:rnd(0,W),y:H+40}; }
   function makeAgents(){
     agents=[];
     for(let i=0;i<N;i++){
@@ -496,7 +497,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
   function reset(){
     els.forEach(e=>{e.classList.remove('on','instant'); if(e.dataset.orig!==undefined) e.textContent=e.dataset.orig;});
     window.scrollTo(0,0);
-    pending=els.slice(); jobs=[]; sparks=[]; done=0; clock=0; workTime=0; state='intro'; paused=false;
+    pending=els.slice(); jobs=[]; sparks=[]; done=0; clock=0; workTime=0; idleSince=0; state='intro'; paused=false;
     btnPause.textContent='Пауза'; btnPause.style.display=''; btnSkip.textContent='Пропустить'; btnSkip.classList.remove('pri');
     hud.classList.remove('hide');
     makeAgents();
@@ -546,9 +547,18 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
       free.sort((a,b)=>Math.hypot(a.x-cx,a.y-cy)-Math.hypot(b.x-cx,b.y-cy));
       const team=free.slice(0,k);
       const job={el, t0:clock, dur, team, revealed:false, guides: area>9000 || Math.random()<.35, name:(el.dataset.b||el.tagName).toLowerCase()};
-      team.forEach(a=>{a.job=job; a.u=Math.random(); a.v=Math.random();});
+      team.forEach(a=>{a.job=job; a.u=Math.random(); a.v=Math.random(); a.park=null;});
       jobs.push(job);
     }
+    if(!jobs.length && pending.length){
+      // блоки, которые уже пролистали (выше экрана), просто показываем — агенты туда не возвращаются
+      const atBottom = scrollY + H >= document.documentElement.scrollHeight - 30;
+      for(let i=pending.length-1;i>=0;i--){
+        const r=pending[i].getBoundingClientRect();
+        if(atBottom || r.bottom<=40){ const el=pending.splice(i,1)[0]; el.classList.add('on','instant'); done++; }
+      }
+    }
+    if(jobs.length) idleSince=clock;
   }
 
   // ---------- рисование ----------
@@ -663,6 +673,9 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
       } else if(state==='intro'){
         const ang=clock/600*(i%2?1:-1)+a.ph, rad=40+a.u*70;
         tx=W/2+Math.cos(ang)*rad; ty=H/2+Math.sin(ang)*rad*0.7; k=0.009;
+      } else if(state==='build' && clock-idleSince>1200){
+        if(!a.park) a.park=exitPoint();
+        tx=a.park.x; ty=a.park.y; k=0.006;
       } else {
         const ang=clock/1400+a.ph, rad=60+a.u*140;
         tx=hive.x+Math.cos(ang)*rad; ty=hive.y+Math.sin(ang*1.3)*rad*0.6; k=0.004;
@@ -712,7 +725,6 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
     if(!hov.el.contains(e.target)) return;
     hov.leaving=true; hov.tl=clock;
   });
-  function exitPoint(){ const side=Math.random()*4|0; return side===0?{x:-40,y:rnd(0,H)}: side===1?{x:W+40,y:rnd(0,H)}: side===2?{x:rnd(0,W),y:-40}:{x:rnd(0,W),y:H+40}; }
   function startHover(el){
     if(hov) endHover();
     hov={el,t0:clock,leaving:false,tl:0,team:[]};
