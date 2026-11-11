@@ -621,14 +621,14 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
   document.getElementById('hudDots').innerHTML = COLORS.slice(0,5).map(c=>`<i style="background:${c}"></i>`).join('');
 
   let W=0,H=0,DPR=1;
-  function resize(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+  function resize(){ DPR=Math.min(devicePixelRatio||1,1.5); W=innerWidth; H=innerHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
   resize(); addEventListener('resize',resize);
 
   if(reduce){ els.forEach(e=>e.classList.add('on','instant')); hud.classList.add('hide'); return; }
 
   // ---------- состояние ----------
   let agents=[], jobs=[], sparks=[], pending=[], done=0;
-  let idleSince=0, workTime=0, clock=0, last=performance.now(), paused=false, state='intro', startClock=0, finishTime=0;
+  let lastDrew=true, lastLabelOnly=false, labelBox=null, idleSince=0, workTime=0, clock=0, last=performance.now(), paused=false, state='intro', startClock=0, finishTime=0;
   let lastUser=-1e9, autoTarget=null, autoT=0;
   ['wheel','touchstart','keydown'].forEach(ev=>addEventListener(ev,()=>{lastUser=performance.now(); autoTarget=null;},{passive:true}));
 
@@ -683,7 +683,8 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
     for(let i=0;i<pending.length;i++) if(inView(pending[i])) return pending.splice(i,1)[0];
     return null;
   }
-  function freeAgents(){ return agents.filter(a=>!a.job && !a.exit); }
+  function freeAgents(){ return agents.filter(a=>!a.job && !a.exit && !a.hover); }
+  const canPlay=()=> state==='done' || (state==='build' && !jobs.length);
 
   function spawnJobs(){
     while(jobs.length<CONC && pending.length){
@@ -751,7 +752,9 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
     ctx.globalAlpha=1;
   }
 
+  let hudLast='';
   function hudUpdate(){
+    if(hud.hidden) return;
     const total=els.length;
     if(state==='intro'){ hudTxt.innerHTML=`<b>${N}</b> агентов · сканируем страницу…`; }
     else if(state==='build'){
@@ -776,10 +779,12 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
 
   // ---------- главный цикл ----------
   function frame(now){
+    // всё стоит — ничего не пересчитываем, кроме сборки
     let dt=Math.min(50, now-last); last=now;
     if(!paused){ clock+=dt; if(state==='build' && jobs.length) workTime+=dt; }
     const f=paused?0:dt/16.67;
-    ctx.clearRect(0,0,W,H);
+    if(lastDrew){ if(lastLabelOnly && labelBox) ctx.clearRect(labelBox[0]-2,labelBox[1]-2,labelBox[2]+4,labelBox[3]+4); else ctx.clearRect(0,0,W,H); }
+    let drew = state==='intro' || jobs.length>0 || !!hov || sparks.length>0;
 
     // интро: рой вокруг значка в центре
     const hive={x:W/2 + Math.sin(clock/900)*W*0.12, y:H*0.5 + Math.cos(clock/1100)*H*0.1};
@@ -840,20 +845,23 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
       // нос стрелки смотрит по направлению полёта, в покое — обычный курсор
       const target = sp>0.9 ? Math.atan2(a.vy,a.vx) - 4.34 : 0;
       let d=target-a.ang; while(d>Math.PI)d-=Math.PI*2; while(d<-Math.PI)d+=Math.PI*2; a.ang+=d*0.07;
-      if(a.x>-60&&a.x<W+60&&a.y>-60&&a.y<H+60){ alive++; arrow(a.x,a.y,a.ang,a.c,a.s); }
+      if(a.x>-60&&a.x<W+60&&a.y>-60&&a.y<H+60){ alive++; drew=true; arrow(a.x,a.y,a.ang,a.c,a.s); }
       if(a.job && !paused && Math.random()<0.018*f) sparks.push({x:a.x+rnd(-14,14),y:a.y+rnd(-14,14),c:a.c,t:0});
     });
     // искры «+»
     for(let i=sparks.length-1;i>=0;i--){ const s=sparks[i]; s.t+=dt; if(s.vx!==undefined && !paused){ s.x+=s.vx*f; s.y+=s.vy*f; s.vx*=Math.pow(.94,f); s.vy*=Math.pow(.94,f); } const a=1-s.t/1100; if(a<=0){sparks.splice(i,1);continue;} plus(s.x,s.y-s.t*0.01,s.c,a,3.5); }
 
     // подпись «Вы» у настоящего курсора — как в многопользовательском редакторе
-    if(state==='done' && finePointer && mouse.in){
+    const drewOther=drew; let drewLabel=false;
+    if(canPlay() && finePointer && mouse.in){
+      drew=true; drewLabel=true;
       youA=Math.min(1,youA+dt/600);
       ctx.globalAlpha=youA; ctx.font='500 10px "JetBrains Mono", monospace';
       const lx=mouse.x+14, ly=mouse.y+20, tw=ctx.measureText('Вы').width+12;
       ctx.fillStyle='#3a78ff'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(lx,ly,tw,17,5) : ctx.rect(lx,ly,tw,17); ctx.fill();
-      ctx.fillStyle='#fff'; ctx.fillText('Вы',lx+6,ly+12); ctx.globalAlpha=1;
+      ctx.fillStyle='#fff'; ctx.fillText('Вы',lx+6,ly+12); ctx.globalAlpha=1; labelBox=[lx,ly,tw,17];
     }
+    lastDrew=drew; lastLabelOnly=drewLabel && !drewOther;
     hudUpdate();
     requestAnimationFrame(frame);
   }
@@ -865,7 +873,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
   addEventListener('pointermove',e=>{ mouse.x=e.clientX; mouse.y=e.clientY; mouse.in=true; });
   document.documentElement.addEventListener('mouseleave',()=>{ mouse.in=false; youA=0; });
   document.addEventListener('pointerover',e=>{
-    if(state!=='done' || !finePointer) return;
+    if(!canPlay() || !finePointer) return;
     const el=e.target.closest(HOVER_SEL);
     if(!el || (hov && hov.el===el && !hov.leaving)) return;
     startHover(el);
@@ -886,7 +894,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
       if(!onScreen){ a.x=(r.left+r.width/2<W/2)?-30:W+30; a.y=r.top+rnd(-120,120); a.vx=a.vy=0; }
     });
   }
-  function endHover(){ if(!hov) return; hov.team.forEach(a=>{ a.hover=null; a.exit=exitPoint(); }); hov=null; }
+  function endHover(){ if(!hov) return; hov.team.forEach(a=>{ a.hover=null; if(state==='done') a.exit=exitPoint(); else a.park=exitPoint(); }); hov=null; }
   function drawHover(){
     if(!hov) return;
     const r=hov.el.getBoundingClientRect();
@@ -906,7 +914,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
   }
   // клик — вспышка искр «+»
   addEventListener('pointerdown',e=>{
-    if(state!=='done') return;
+    if(!canPlay()) return;
     for(let i=0;i<12;i++){ const an=i/12*Math.PI*2+rnd(-.2,.2), v=rnd(1.2,2.6); sparks.push({x:e.clientX,y:e.clientY,vx:Math.cos(an)*v,vy:Math.sin(an)*v,c:COLORS[i%COLORS.length],t:0}); }
   });
 
