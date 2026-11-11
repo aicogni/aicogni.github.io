@@ -1136,7 +1136,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
 })();
 
 /* =====================================================================
-   КОНВЕЙЕР «ФОТО → РОЛИК»: агент сканирует референс и несёт его в ролик
+   КОНВЕЙЕР «ФОТО → РОЛИК»: один быстрый проход — все 8 референсов влетают в ролик
    ===================================================================== */
 (function(){
   const flow=document.getElementById('flow'), cv=document.getElementById('flowFx');
@@ -1145,78 +1145,62 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
   const imgs=[...flow.querySelectorAll('.refgrid img')], phone=flow.querySelector('.phone');
   const chip=document.getElementById('flowChip'), txt=document.getElementById('flowTxt');
   const COLORS=['#ff6b9a','#ffc93d','#3dff9a','#b18cff','#ff8a3d','#3dd5ff','#9db9ff','#ffffff'];
-  const SCAN=750, FLY=1100, LAND=350, CYCLE=SCAN+FLY+LAND;
-  let W=0,H=0,visible=false,t0=0,idx=-1,sparks=[],last=performance.now(),landed=0;
+  const STAG=170, SCAN=320, FLY=650;                   // быстрый проход, с нахлёстом
+  const N=imgs.length, TOTAL=(N-1)*STAG+SCAN+FLY;
+  let W=0,H=0,visible=false,start=0,state='wait',sparks=[],last=performance.now(),landed=new Set(),doneAt=0,raf=0;
   function size(){ const d=Math.min(devicePixelRatio||1,2), r=flow.getBoundingClientRect(); W=r.width; H=r.height; cv.width=W*d; cv.height=H*d; ctx.setTransform(d,0,0,d,0,0); }
   new ResizeObserver(size).observe(flow); size();
-  new IntersectionObserver(es=>{ visible=es[0].isIntersecting; },{threshold:.15}).observe(flow);
+  new IntersectionObserver(es=>{ visible=es[0].isIntersecting; if(visible && state!=='done' && !raf) raf=requestAnimationFrame(loop); },{threshold:.35}).observe(flow);
   const ease=t=>t<0?0:t>1?1:t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-  function rel(el){ const a=el.getBoundingClientRect(), b=flow.getBoundingClientRect(); return {x:a.left-b.left,y:a.top-b.top,w:a.width,h:a.height}; }
+  const rel=el=>{ const a=el.getBoundingClientRect(), b=flow.getBoundingClientRect(); return {x:a.left-b.left,y:a.top-b.top,w:a.width,h:a.height}; };
   function arrow(x,y,col){ ctx.save(); ctx.translate(x,y); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,15); ctx.lineTo(4,11.2); ctx.lineTo(7,17.4); ctx.lineTo(9.6,16.2); ctx.lineTo(6.7,10.2); ctx.lineTo(11.6,10.2); ctx.closePath(); ctx.fillStyle=col; ctx.fill(); ctx.lineWidth=1.2; ctx.strokeStyle='rgba(2,10,29,.9)'; ctx.stroke(); ctx.restore(); }
-  function handles(x,y,w,h){ [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([px,py])=>{ ctx.fillStyle='#fff'; ctx.fillRect(px-3,py-3,6,6); ctx.strokeStyle='#3a78ff'; ctx.lineWidth=1.2; ctx.strokeRect(px-2.5,py-2.5,5,5); }); }
-  function bez(p0,p1,p2,p3,t){ const u=1-t; return { x:u*u*u*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*p3.x, y:u*u*u*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*p3.y }; }
-  function setTxt(s){ if(txt.textContent!==s) txt.textContent=s; }
-  function ready(){ return imgs.every(i=>!i.hasAttribute('data-b')||i.classList.contains('on')) && (!phone.parentElement.hasAttribute('data-b')||phone.parentElement.classList.contains('on')); }
+  const bez=(p0,p1,p2,p3,t)=>{ const u=1-t; return { x:u*u*u*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*p3.x, y:u*u*u*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*p3.y }; };
+  const ready=()=>imgs.every(i=>i.classList.contains('on')) && phone.parentElement.classList.contains('on');
 
   function loop(now){
-    requestAnimationFrame(loop);
+    raf=0;
     const dt=Math.min(50,now-last); last=now;
     ctx.clearRect(0,0,W,H);
-    if(!visible || !ready()){ t0=now; return; }
-    const t=now-t0;
-    const n=Math.floor(t/CYCLE), ph=t-n*CYCLE;
-    const i=n%imgs.length;
-    if(i!==idx){ idx=i; if(i===0) imgs.forEach(im=>im.classList.remove('used')); }
-    const img=imgs[i], col=COLORS[i%COLORS.length];
-    const r=rel(img), pr=rel(phone), cr=rel(chip);
-    const name='ref_0'+(i+1)+'.jpg';
-
-    if(ph<SCAN){ // 1. скан референса
-      const p=ph/SCAN, g=ease(Math.min(1,p*1.6));
-      ctx.fillStyle='rgba(58,120,255,.16)'; ctx.fillRect(r.x,r.y,r.w,r.h*p);
-      ctx.strokeStyle='#3a78ff'; ctx.lineWidth=1.5; ctx.strokeRect(r.x-3.5,r.y-3.5,(r.w+7)*g,(r.h+7)*g);
-      if(g>.95) handles(r.x-3.5,r.y-3.5,r.w+7,r.h+7);
-      const ly=r.y+r.h*p;
-      const gr=ctx.createLinearGradient(0,ly-14,0,ly+2); gr.addColorStop(0,'rgba(91,141,255,0)'); gr.addColorStop(1,'rgba(157,185,255,.85)');
-      ctx.fillStyle=gr; ctx.fillRect(r.x,ly-14,r.w,16);
-      ctx.fillStyle='#e8efff'; ctx.fillRect(r.x-6,ly-1,r.w+12,2);
-      arrow(r.x+r.w+2-Math.sin(p*Math.PI)*r.w*.3, ly+4, col);
-      ctx.font='500 10px "JetBrains Mono", monospace'; ctx.fillStyle='#5b8dff'; ctx.fillText(name, r.x-3, r.y-10);
-      setTxt('сканируем '+name); chip.classList.add('busy');
-    } else if(ph<SCAN+FLY){ // 2. агент несёт кадр по конвейеру
-      img.classList.add('used');
-      const p=ease((ph-SCAN)/FLY);
-      const P0={x:r.x+r.w/2,y:r.y+r.h/2}, P3={x:pr.x+pr.w/2,y:pr.y+pr.h*.42};
-      const C={x:cr.x+cr.w/2,y:cr.y+cr.h/2};
-      const P1={x:(P0.x+C.x)/2,y:C.y+(P0.y-C.y)*.2-40}, P2={x:(C.x+P3.x)/2,y:C.y+(P3.y-C.y)*.2-40};
-      // след-траектория
-      ctx.setLineDash([3,5]); ctx.strokeStyle='rgba(91,141,255,.35)'; ctx.lineWidth=1.2; ctx.beginPath();
-      for(let k=0;k<=30;k++){ const q=bez(P0,P1,P2,P3,k/30); k?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y); } ctx.stroke(); ctx.setLineDash([]);
-      const q=bez(P0,P1,P2,P3,p), s=1-Math.sin(p*Math.PI)*.25, tw=34*s, th=45*s;
-      const tilt=Math.sin(p*Math.PI*2)*.12;
-      ctx.save(); ctx.translate(q.x,q.y); ctx.rotate(tilt);
-      ctx.shadowColor='rgba(47,107,255,.7)'; ctx.shadowBlur=18;
-      ctx.fillStyle='#fff'; ctx.fillRect(-tw/2-2,-th/2-2,tw+4,th+4); ctx.shadowBlur=0;
-      try{ ctx.drawImage(img,-tw/2,-th/2,tw,th); }catch(e){}
-      ctx.strokeStyle='#3a78ff'; ctx.lineWidth=1.2; ctx.strokeRect(-tw/2-2.5,-th/2-2.5,tw+5,th+5);
-      ctx.restore();
-      arrow(q.x+tw/2-2,q.y+th/2-4,col);
-      if(Math.random()<dt/45) sparks.push({x:q.x+(Math.random()-.5)*20,y:q.y+(Math.random()-.5)*20,c:col,t:0});
-      setTxt(p<.5?'собираем кадр':'анимируем сцену');
-    } else { // 3. кадр «влетает» в ролик
-      if(landed!==n){ landed=n; phone.classList.add('hit'); setTimeout(()=>phone.classList.remove('hit'),380);
-        for(let k=0;k<12;k++){ const a=k/12*Math.PI*2; sparks.push({x:pr.x+pr.w/2,y:pr.y+pr.h*.42,vx:Math.cos(a)*2.2,vy:Math.sin(a)*2.2,c:COLORS[k%COLORS.length],t:0}); } }
-      const p=(ph-SCAN-FLY)/LAND;
-      ctx.globalAlpha=1-p; ctx.strokeStyle='#9db9ff'; ctx.lineWidth=1.5; ctx.strokeRect(pr.x-4-p*10,pr.y-4-p*10,pr.w+8+p*20,pr.h+8+p*20); ctx.globalAlpha=1;
-      setTxt('+1 кадр · '+(i+1)+' / '+imgs.length); chip.classList.remove('busy');
+    if(state==='done') return;
+    if(!visible){ return; }                            // продолжим, когда раздел снова на экране
+    raf=requestAnimationFrame(loop);
+    if(state==='wait'){ if(!ready()) return; state='run'; start=now; }
+    const t=now-start, pr=rel(phone), cr=rel(chip);
+    const P3={x:pr.x+pr.w/2,y:pr.y+pr.h*.42}, C={x:cr.x+cr.w/2,y:cr.y+cr.h/2};
+    chip.classList.toggle('busy', t<TOTAL);
+    for(let i=0;i<N;i++){
+      const lt=t-i*STAG; if(lt<0) continue;
+      const img=imgs[i], r=rel(img), col=COLORS[i%COLORS.length];
+      if(lt<SCAN){ // быстрый скан
+        const p=lt/SCAN;
+        ctx.fillStyle='rgba(58,120,255,.18)'; ctx.fillRect(r.x,r.y,r.w,r.h*p);
+        ctx.strokeStyle='#3a78ff'; ctx.lineWidth=1.5; ctx.strokeRect(r.x-3.5,r.y-3.5,r.w+7,r.h+7);
+        ctx.fillStyle='#e8efff'; ctx.fillRect(r.x-4,r.y+r.h*p-1,r.w+8,2);
+      } else if(lt<SCAN+FLY){ // полёт в ролик
+        img.classList.add('used');
+        const p=ease((lt-SCAN)/FLY), P0={x:r.x+r.w/2,y:r.y+r.h/2};
+        const P1={x:(P0.x+C.x)/2,y:C.y+(P0.y-C.y)*.2-40}, P2={x:(C.x+P3.x)/2,y:C.y+(P3.y-C.y)*.2-40};
+        const q=bez(P0,P1,P2,P3,p), k=1-p*.45, tw=32*k, th=43*k;
+        ctx.save(); ctx.translate(q.x,q.y); ctx.rotate(Math.sin(p*Math.PI*2)*.15);
+        ctx.shadowColor='rgba(47,107,255,.7)'; ctx.shadowBlur=14; ctx.fillStyle='#fff'; ctx.fillRect(-tw/2-2,-th/2-2,tw+4,th+4); ctx.shadowBlur=0;
+        try{ ctx.drawImage(img,-tw/2,-th/2,tw,th); }catch(e){}
+        ctx.restore();
+        arrow(q.x+tw/2-2,q.y+th/2-4,col);
+        if(Math.random()<dt/40) sparks.push({x:q.x+(Math.random()-.5)*16,y:q.y+(Math.random()-.5)*16,c:col,t:0});
+      } else if(!landed.has(i)){ // влетел
+        landed.add(i); phone.classList.add('hit'); setTimeout(()=>phone.classList.remove('hit'),260);
+        for(let k=0;k<6;k++){ const a=Math.random()*Math.PI*2; sparks.push({x:P3.x,y:P3.y,vx:Math.cos(a)*2.4,vy:Math.sin(a)*2.4,c:col,t:0}); }
+      }
     }
-    // искры «+»
-    for(let k=sparks.length-1;k>=0;k--){ const s=sparks[k]; s.t+=dt; if(s.vx!==undefined){ s.x+=s.vx; s.y+=s.vy; s.vx*=.93; s.vy*=.93; }
-      const a=1-s.t/800; if(a<=0){ sparks.splice(k,1); continue; }
+    txt.textContent = t<TOTAL ? 'собираем ролик · '+landed.size+' / '+N : 'ролик готов · '+N+' / '+N;
+    if(t>=TOTAL && !doneAt){ doneAt=now; setTimeout(()=>imgs.forEach(im=>im.classList.remove('used')),500); }
+    for(let k=sparks.length-1;k>=0;k--){ const s=sparks[k]; s.t+=dt; if(s.vx!==undefined){ s.x+=s.vx; s.y+=s.vy; s.vx*=.92; s.vy*=.92; }
+      const a=1-s.t/700; if(a<=0){ sparks.splice(k,1); continue; }
       ctx.globalAlpha=a; ctx.strokeStyle=s.c; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(s.x-3.5,s.y); ctx.lineTo(s.x+3.5,s.y); ctx.moveTo(s.x,s.y-3.5); ctx.lineTo(s.x,s.y+3.5); ctx.stroke(); ctx.globalAlpha=1; }
+    if(doneAt && !sparks.length){ state='done'; ctx.clearRect(0,0,W,H); cancelAnimationFrame(raf); raf=0; }
   }
-  requestAnimationFrame(loop);
 })();
+
 </script>
 </body>
 </html>
