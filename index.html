@@ -197,8 +197,57 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
 .pipe .chip svg{width:16px;height:16px}
 .phone{position:relative;max-width:300px;margin:0 auto;border-radius:30px;padding:8px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line-2);box-shadow:0 30px 80px rgba(47,107,255,.28)}
 .phone video{width:100%;aspect-ratio:9/16;border-radius:22px;display:block;object-fit:cover;background:#000}
-.snd{position:absolute;right:18px;bottom:18px;height:32px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(2,10,29,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:#fff;cursor:pointer}
-.snd:hover{border-color:#fff}
+.vwrap{position:relative;border-radius:22px;overflow:hidden;background:#000}
+.vwrap video{cursor:zoom-in}
+.vph{width:100%;aspect-ratio:9/16;border-radius:22px;background:#000 center/cover no-repeat;opacity:.35}
+.vctl{position:absolute;left:10px;right:10px;bottom:10px;display:flex;align-items:center;gap:10px;padding:7px 12px 7px 8px;border-radius:999px;background:rgba(2,10,29,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(157,185,255,.28);font-family:var(--mono);font-size:10px;color:#fff;z-index:2}
+.vmute{flex:none;width:26px;height:26px;display:grid;place-items:center;border-radius:50%;border:0;background:var(--blue);color:#fff;cursor:pointer;transition:background .2s}
+.vmute:hover{background:var(--blue-2)}
+.vmute svg{width:15px;height:15px}
+.vmute .x{display:none}
+.vmute.muted{background:rgba(255,255,255,.12)}
+.vmute.muted .x{display:inline}
+.vmute.muted .wave{display:none}
+.vol{--v:70%;flex:1;min-width:0;height:18px;margin:0;background:transparent;-webkit-appearance:none;appearance:none;cursor:pointer}
+.vol:focus{outline:none}
+.vol::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--blue-2) var(--v),rgba(255,255,255,.22) var(--v))}
+.vol::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--blue-2) var(--v),rgba(255,255,255,.22) var(--v))}
+.vol::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;margin-top:-4.5px;background:#fff;border:1.5px solid var(--sel);border-radius:2px;box-shadow:0 0 10px rgba(91,141,255,.8)}
+.vol::-moz-range-thumb{width:9px;height:9px;background:#fff;border:1.5px solid var(--sel);border-radius:2px;box-shadow:0 0 10px rgba(91,141,255,.8)}
+.vpct{flex:none;width:32px;text-align:right;color:var(--blue-3)}
+.vzoom{position:absolute;top:10px;right:10px;z-index:2;width:30px;height:30px;display:grid;place-items:center;border-radius:9px;border:1px solid rgba(157,185,255,.3);background:rgba(2,10,29,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;cursor:pointer}
+.vzoom:hover{border-color:#fff}
+.vzoom svg{width:14px;height:14px}
+.refgrid img{cursor:zoom-in}
+
+/* окно просмотра */
+.lb{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center}
+.lb[hidden]{display:none}
+.lb-bg{position:absolute;inset:0;background:
+  linear-gradient(rgba(96,140,255,.06) 1px, transparent 1px) 0 0/48px 48px,
+  linear-gradient(90deg, rgba(96,140,255,.06) 1px, transparent 1px) 0 0/48px 48px,
+  rgba(2,6,22,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;transition:opacity .35s}
+.lb.open .lb-bg{opacity:1}
+.lb-stage{position:relative;z-index:1}
+.lb-stage .vwrap{height:min(84vh,calc(92vw * 16 / 9));aspect-ratio:9/16;border-radius:18px}
+.lb-stage .vwrap video{height:100%;width:100%;aspect-ratio:auto;border-radius:0;cursor:pointer}
+.lb-stage img.lb-img{display:block;max-width:88vw;max-height:80vh;border-radius:12px;background:var(--panel)}
+.lb-frame{position:absolute;inset:-8px;border:1.5px solid var(--sel);pointer-events:none;opacity:0;transition:opacity .3s .25s}
+.lb.open .lb-frame{opacity:1}
+.lb-frame i{position:absolute;width:8px;height:8px;background:#fff;border:1.5px solid var(--sel)}
+.lb-frame i:nth-child(1){left:-5px;top:-5px}.lb-frame i:nth-child(2){right:-5px;top:-5px}.lb-frame i:nth-child(3){left:-5px;bottom:-5px}.lb-frame i:nth-child(4){right:-5px;bottom:-5px}
+.lb-name{position:absolute;left:-8px;top:-26px;font-family:var(--mono);font-size:11px;color:var(--blue-2);white-space:nowrap}
+.lb-size{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);font-family:var(--mono);font-size:10px;background:var(--sel);color:#fff;padding:2px 6px;white-space:nowrap}
+.lb-ui{position:absolute;z-index:2;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:#fff;border:1px solid var(--line-2);background:rgba(4,14,38,.85);border-radius:999px;height:36px;padding:0 14px;cursor:pointer;display:flex;align-items:center;gap:8px;opacity:0;transition:opacity .3s .2s, border-color .2s}
+.lb.open .lb-ui{opacity:1}
+.lb-ui:hover{border-color:var(--blue-2)}
+.lb-x{top:18px;right:18px}
+.lb-prev{left:18px;top:50%;transform:translateY(-50%)}
+.lb-next{right:18px;top:50%;transform:translateY(-50%)}
+.lb-count{bottom:18px;left:50%;transform:translateX(-50%);cursor:default}
+.lb.video .lb-prev,.lb.video .lb-next,.lb.video .lb-count{display:none}
+.lb-stage .vzoom{display:none}
+@media (max-width:620px){ .lb-size{display:none} .lb-stage img.lb-img{max-height:72vh} .lb-prev{top:auto;bottom:18px;left:18px;transform:none} .lb-next{top:auto;bottom:18px;right:18px;transform:none} .lb-count{bottom:24px;border:0;background:none} .lb-name{top:-24px} }
 .res-cap{text-align:center;margin-top:14px}
 .points{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px}
 .point{padding:22px;border:1px solid var(--line);border-radius:14px;background:rgba(6,22,51,.35)}
@@ -345,14 +394,14 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
       <div>
         <div class="flow-cap mono" data-b="label"><span>Было · 8 фото от бренда</span><span class="tag-b">референсы</span></div>
         <div class="refgrid">
-          <img src="assets/stayer/ref1.jpg" alt="Фото-референс одежды 1" loading="lazy" data-b="img">
-          <img src="assets/stayer/ref2.jpg" alt="Фото-референс одежды 2" loading="lazy" data-b="img">
-          <img src="assets/stayer/ref3.jpg" alt="Фото-референс одежды 3" loading="lazy" data-b="img">
-          <img src="assets/stayer/ref4.jpg" alt="Фото-референс одежды 4" loading="lazy" data-b="img">
-          <img src="assets/stayer/ref5.jpg" alt="Фото-референс одежды 5" loading="lazy" data-b="img">
-          <img src="assets/stayer/ref6.jpg" alt="Фото-референс одежды 6" loading="lazy" data-b="img">
-          <img src="assets/stayer/ref7.jpg" alt="Фото-референс одежды 7" loading="lazy" data-b="img">
-          <img src="assets/stayer/ref8.jpg" alt="Фото-референс одежды 8" loading="lazy" data-b="img">
+          <img src="assets/stayer/ref1.jpg" data-full="assets/stayer/ref1-full.jpg" alt="Фото-референс одежды 1" loading="lazy" data-b="img">
+          <img src="assets/stayer/ref2.jpg" data-full="assets/stayer/ref2-full.jpg" alt="Фото-референс одежды 2" loading="lazy" data-b="img">
+          <img src="assets/stayer/ref3.jpg" data-full="assets/stayer/ref3-full.jpg" alt="Фото-референс одежды 3" loading="lazy" data-b="img">
+          <img src="assets/stayer/ref4.jpg" data-full="assets/stayer/ref4-full.jpg" alt="Фото-референс одежды 4" loading="lazy" data-b="img">
+          <img src="assets/stayer/ref5.jpg" data-full="assets/stayer/ref5-full.jpg" alt="Фото-референс одежды 5" loading="lazy" data-b="img">
+          <img src="assets/stayer/ref6.jpg" data-full="assets/stayer/ref6-full.jpg" alt="Фото-референс одежды 6" loading="lazy" data-b="img">
+          <img src="assets/stayer/ref7.jpg" data-full="assets/stayer/ref7-full.jpg" alt="Фото-референс одежды 7" loading="lazy" data-b="img">
+          <img src="assets/stayer/ref8.jpg" data-full="assets/stayer/ref8-full.jpg" alt="Фото-референс одежды 8" loading="lazy" data-b="img">
         </div>
       </div>
       <div class="pipe" data-b="pipe" aria-hidden="true">
@@ -362,8 +411,15 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
       </div>
       <div data-b="video">
         <div class="phone">
-          <video id="refVideo" src="assets/stayer/video.mp4" poster="assets/stayer/poster.jpg" muted loop playsinline preload="metadata"></video>
-          <button class="snd" id="refSnd" type="button">Включить звук</button>
+          <div class="vwrap" id="vwrap">
+            <video id="refVideo" src="assets/stayer/video.mp4" poster="assets/stayer/poster.jpg" muted loop playsinline preload="metadata"></video>
+            <button class="vzoom" id="vZoom" type="button" aria-label="Увеличить видео"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button>
+            <div class="vctl">
+              <button class="vmute muted" id="vMute" type="button" aria-label="Включить звук"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="wave" d="M16.5 9a4.5 4.5 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/><path class="x" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
+              <input class="vol" id="vVol" type="range" min="0" max="100" value="70" aria-label="Громкость">
+              <span class="vpct" id="vPct">0%</span>
+            </div>
+          </div>
         </div>
         <div class="res-cap mono">Стало · рекламный ролик 9:16</div>
       </div>
@@ -516,6 +572,16 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
     <div class="fbot mono" data-b="footer"><span>© 2026 AI cogni · независимая AI-продакшн команда</span><span>Собрано агентами · ru</span></div>
   </div>
 </footer>
+
+<!-- ================= ОКНО ПРОСМОТРА ================= -->
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Просмотр">
+  <div class="lb-bg" id="lbBg"></div>
+  <div class="lb-stage" id="lbStage"><div class="lb-frame"><i></i><i></i><i></i><i></i><span class="lb-name" id="lbName"></span><span class="lb-size" id="lbSize"></span></div></div>
+  <button class="lb-ui lb-x" id="lbX" type="button">Закрыть ✕</button>
+  <button class="lb-ui lb-prev" id="lbPrev" type="button">← Назад</button>
+  <button class="lb-ui lb-next" id="lbNext" type="button">Вперёд →</button>
+  <span class="lb-ui lb-count" id="lbCount"></span>
+</div>
 
 <!-- ================= SWARM + HUD ================= -->
 <canvas id="swarm" aria-hidden="true"></canvas>
@@ -1009,13 +1075,87 @@ void main(){
 
 
 /* =====================================================================
-   ВИДЕО-ПРИМЕР: играет только на экране, кнопка звука
+   ВИДЕО-ПРИМЕР: громкость + увеличение видео и фото
    ===================================================================== */
 (function(){
-  const v=document.getElementById('refVideo'), b=document.getElementById('refSnd');
-  if(!v) return;
-  new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ const p=v.play(); if(p&&p.catch) p.catch(()=>{}); } else v.pause(); }); },{threshold:.25}).observe(v);
-  b.addEventListener('click',()=>{ v.muted=!v.muted; b.textContent=v.muted?'Включить звук':'Выключить звук'; if(!v.muted){ const p=v.play(); if(p&&p.catch) p.catch(()=>{}); } });
+  const v=document.getElementById('refVideo'); if(!v) return;
+  const wrap=document.getElementById('vwrap'), mute=document.getElementById('vMute'), vol=document.getElementById('vVol'), pct=document.getElementById('vPct');
+  const play=()=>{ const p=v.play(); if(p&&p.catch) p.catch(()=>{}); };
+  new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting) play(); else if(!lbOpen) v.pause(); }); },{threshold:.25}).observe(v);
+
+  // ---- звук ----
+  function paint(){ const val=+vol.value; vol.style.setProperty('--v',val+'%'); const m=v.muted||val===0; mute.classList.toggle('muted',m); mute.setAttribute('aria-label',m?'Включить звук':'Выключить звук'); pct.textContent=(m?0:val)+'%'; }
+  vol.addEventListener('input',()=>{ const val=+vol.value; v.volume=val/100; v.muted=val===0; if(!v.muted) play(); paint(); });
+  mute.addEventListener('click',e=>{ e.stopPropagation(); if(v.muted||+vol.value===0){ if(+vol.value===0) vol.value=70; v.volume=vol.value/100; v.muted=false; play(); } else v.muted=true; paint(); });
+  vol.addEventListener('click',e=>e.stopPropagation());
+  paint();
+
+  // ---- окно просмотра ----
+  const lb=document.getElementById('lb'), bg=document.getElementById('lbBg'), stage=document.getElementById('lbStage');
+  const nameEl=document.getElementById('lbName'), sizeEl=document.getElementById('lbSize'), countEl=document.getElementById('lbCount');
+  const thumbs=[...document.querySelectorAll('.refgrid img')];
+  const EASE='cubic-bezier(.2,.75,.2,1)';
+  let lbOpen=false, mode=null, idx=0, media=null, src=null, ph=null, busy=false;
+
+  function flip(el, from, to, dur){ // анимация из одного прямоугольника в другой
+    const dx=from.left-to.left, dy=from.top-to.top, sx=from.width/to.width, sy=from.height/to.height;
+    el.style.transformOrigin='0 0';
+    return el.animate([{transform:`translate(${dx}px,${dy}px) scale(${sx},${sy})`},{transform:'none'}],{duration:dur,easing:EASE});
+  }
+  function lock(on){ document.documentElement.style.overflow=on?'hidden':''; }
+
+  function openVideo(){
+    if(lbOpen||busy) return; busy=true; mode='video'; lbOpen=true;
+    const from=wrap.getBoundingClientRect();
+    ph=document.createElement('div'); ph.className='vph'; ph.style.backgroundImage='url(assets/stayer/poster.jpg)';
+    wrap.parentNode.insertBefore(ph,wrap);
+    lb.className='lb video'; lb.hidden=false; stage.prepend(wrap);
+    nameEl.textContent='stayer_ad.mp4'; sizeEl.textContent='1080 × 1920 · 9:16';
+    lock(true); requestAnimationFrame(()=>lb.classList.add('open'));
+    flip(wrap,from,wrap.getBoundingClientRect(),480).onfinish=()=>{ busy=false; };
+    play();
+  }
+  function openImg(i){
+    if(busy) return; busy=true; mode='img'; idx=(i+thumbs.length)%thumbs.length;
+    const t=thumbs[idx], from=t.getBoundingClientRect();
+    const im=new Image(); im.className='lb-img'; im.alt=t.alt; im.src=t.dataset.full||t.src;
+    const show=()=>{
+      if(media && media!==wrap) media.remove();
+      media=im; stage.prepend(im);
+      nameEl.textContent='ref_0'+(idx+1)+'.jpg'; sizeEl.textContent=im.naturalWidth+' × '+im.naturalHeight;
+      countEl.textContent=(idx+1)+' / '+thumbs.length;
+      if(!lbOpen){ lbOpen=true; lb.className='lb'; lb.hidden=false; lock(true); requestAnimationFrame(()=>lb.classList.add('open'));
+        flip(im,from,im.getBoundingClientRect(),460).onfinish=()=>{ busy=false; }; }
+      else { im.animate([{opacity:0,transform:'scale(.96)'},{opacity:1,transform:'none'}],{duration:260,easing:EASE}).onfinish=()=>{ busy=false; }; }
+    };
+    if(!lbOpen){ lb.className='lb'; } // готовим окно заранее
+    im.complete ? show() : (im.onload=show, im.onerror=()=>{ busy=false; });
+  }
+  function close(){
+    if(!lbOpen||busy) return; busy=true;
+    lb.classList.remove('open');
+    const el = mode==='video' ? wrap : media;
+    const target = mode==='video' ? ph.getBoundingClientRect() : thumbs[idx].getBoundingClientRect();
+    const cur=el.getBoundingClientRect();
+    el.style.transformOrigin='0 0';
+    const a=el.animate([{transform:'none'},{transform:`translate(${target.left-cur.left}px,${target.top-cur.top}px) scale(${target.width/cur.width},${target.height/cur.height})`}],{duration:380,easing:EASE,fill:'forwards'});
+    a.onfinish=()=>{
+      if(mode==='video'){ ph.replaceWith(wrap); ph=null; a.cancel(); }
+      else { el.remove(); media=null; }
+      lb.hidden=true; lock(false); lbOpen=false; busy=false; mode=null;
+    };
+  }
+  v.addEventListener('click',()=>{ if(!lbOpen) openVideo(); else { v.paused?play():v.pause(); } });
+  document.getElementById('vZoom').addEventListener('click',e=>{ e.stopPropagation(); lbOpen?close():openVideo(); });
+  thumbs.forEach((t,i)=>t.addEventListener('click',()=>openImg(i)));
+  document.getElementById('lbX').addEventListener('click',close);
+  bg.addEventListener('click',close);
+  document.getElementById('lbPrev').addEventListener('click',()=>openImg(idx-1));
+  document.getElementById('lbNext').addEventListener('click',()=>openImg(idx+1));
+  addEventListener('keydown',e=>{ if(!lbOpen) return; if(e.key==='Escape') close(); if(mode==='img'&&e.key==='ArrowLeft') openImg(idx-1); if(mode==='img'&&e.key==='ArrowRight') openImg(idx+1); });
+  // свайп по фото на телефоне
+  let sx=null; lb.addEventListener('touchstart',e=>{ sx=e.touches[0].clientX; },{passive:true});
+  lb.addEventListener('touchend',e=>{ if(sx===null||mode!=='img') return; const d=e.changedTouches[0].clientX-sx; if(Math.abs(d)>50) openImg(idx+(d<0?1:-1)); sx=null; });
 })();
 
 /* =====================================================================
