@@ -93,7 +93,9 @@ h1 span{display:block}
 .lead strong{color:var(--text);font-weight:500}
 .cta{display:flex;gap:12px;margin-top:34px;flex-wrap:wrap}
 .owl-box{position:relative;height:520px;display:flex;align-items:center;justify-content:center}
-#owl{width:100%;max-width:460px;height:520px;display:block}
+.owl-box::before{content:"";position:absolute;inset:6% 4%;border-radius:50%;background:radial-gradient(circle at 28% 30%,rgba(255,138,92,.45),transparent 42%),radial-gradient(circle at 74% 72%,rgba(255,138,92,.32),transparent 40%),radial-gradient(circle at 55% 45%,rgba(47,107,255,.55),transparent 62%);filter:blur(30px);pointer-events:none}
+#owl{position:relative}
+#owl{width:100%;max-width:580px;height:520px;display:block}
 .owl-cap{position:absolute;right:6px;bottom:8px;text-align:right}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:64px;border-top:1px solid var(--line)}
 .stat{padding:22px 22px 0 0}
@@ -266,7 +268,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
 
 /* ---------- BUILD SYSTEM ---------- */
 .js-build [data-b]{opacity:0}
-.js-build [data-b].on{opacity:1;animation:reveal .95s cubic-bezier(.22,.61,.36,1) both}
+.js-build [data-b].on{opacity:1;animation:reveal .95s cubic-bezier(.22,.61,.36,1) backwards}
 @keyframes reveal{
   0%{clip-path:inset(0 100% 0 0);filter:brightness(1.6) saturate(.4)}
   70%{filter:brightness(1.1)}
@@ -373,7 +375,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
         </div>
       </div>
       <div class="owl-box" data-b="canvas3d">
-        <canvas id="owl" aria-label="3D-персонаж AI cogni — сова"></canvas>
+        <canvas id="owl" aria-label="3D-логотип AI cogni"></canvas>
       </div>
     </div>
     <div class="stats">
@@ -913,169 +915,128 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
 })();
 
 /* =====================================================================
-   2. 3D-ПЕРСОНАЖ: СОВА (WebGL raymarching, без библиотек)
+   2. 3D-ЛОГОТИП AI cogni (WebGL raymarching, без библиотек)
    ===================================================================== */
 (function(){
   const c=document.getElementById('owl');
   const gl=c.getContext('webgl',{premultipliedAlpha:false,alpha:true,antialias:false});
   if(!gl){ c.style.display='none'; return; }
-
+  const PTS=new Float32Array([-1.0824,-0.4706,0.0000,-1.0824,-0.4706,0.0000,-1.1000,-0.3176,0.0240,-1.0765,-0.1529,0.0421,-1.0176,-0.0118,0.0499,-0.9235,0.0882,0.0455,-0.8059,0.1412,0.0299,-0.6765,0.1412,0.0071,-0.5706,0.1059,-0.0175,-0.4941,0.0235,-0.0378,-0.4529,-0.1176,-0.0986,-0.4824,-0.2588,-0.1399,-0.5706,-0.3529,-0.1554,-0.6765,-0.3588,-0.1440,-0.7588,-0.2706,-0.1093,-0.7824,-0.1353,-0.0591,-0.7471,0.0000,-0.0028,-0.6647,0.0706,0.0495,-0.5529,0.1059,0.0399,-0.4176,0.0882,0.0206,-0.3059,0.0118,-0.0038,-0.2294,-0.0941,-0.0272,-0.1706,-0.1471,-0.0440,-0.1118,-0.0588,-0.0500,-0.0529,0.0706,-0.0438,-0.0176,0.1294,-0.0268,0.0353,0.0529,-0.0033,0.0941,-0.0765,0.0210,0.1294,-0.1412,0.0402,0.1824,-0.0471,0.0495,0.2529,0.0824,0.0467,0.3000,0.1294,0.0325,0.3588,0.0706,0.0103,0.4471,-0.0588,-0.0144,0.5471,-0.1941,-0.0356,0.6647,-0.2824,-0.0481,0.8000,-0.3176,-0.0488,0.9353,-0.2941,-0.0375,1.0412,-0.2118,-0.0171,1.1000,-0.0824,0.0075,1.0941,0.0588,0.0303,1.0294,0.1824,0.0456,0.9235,0.2706,0.0498,0.8059,0.2824,0.0418,0.7176,0.2235,0.0236,0.6706,0.1294,-0.0004,0.6706,0.1294,-0.0004,0.6706,0.1294,-0.0004,0.6706,0.1294,-0.0004,0.6706,0.1294,-0.0004,0.6706,0.1294,-0.0004]);
+  const CH=new Float32Array([-0.7638,-0.1186,-0.0304,0.5757,-0.4222,-0.0452,-0.0308,0.5406,0.3638,-0.0729,-0.0011,0.7139,0.8462,0.0828,0.0109,0.4903]);
   const vs=`attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
   const fs=`
 precision highp float;
-uniform vec2 R; uniform float T; uniform vec2 M; uniform float B; uniform float F; uniform float HOP; uniform float TL;
+uniform vec2 R; uniform float T; uniform vec2 M; uniform float SPIN; uniform float BOUNCE;
+uniform vec3 P[51]; uniform vec4 CH[4];
+const vec3 DOT=vec3(0.9471,0.4412,0.0200);
+const float RT=.1, RD=.125;
+float yaw,pit,bob;
 mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}
-float sdS(vec3 p,float r){return length(p)-r;}
-float sdE(vec3 p,vec3 r){float k0=length(p/r);float k1=length(p/(r*r));return k0*(k0-1.)/k1;}
-float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
-vec2 U(vec2 a,vec2 b){return a.x<b.x?a:b;}
-const vec3 HC=vec3(0.,.42,0.);
-const vec3 EC=vec3(.19,.46,.43);
-float hYaw,hPitch,hRoll; vec3 look;
-// координаты головы (голова поворачивается отдельно от тела)
-vec3 toHead(vec3 p){vec3 q=p-HC; q.xz*=rot(hYaw); q.yz*=rot(hPitch); q.xy*=rot(hRoll); return q+HC;}
+float sdCap(vec3 p,vec3 a,vec3 b){vec3 pa=p-a,ba=b-a;float h=clamp(dot(pa,ba)/max(dot(ba,ba),1e-6),0.,1.);return length(pa-ba*h)-RT;}
+vec3 toLocal(vec3 p){ p.y-=bob; p.xz*=rot(yaw); p.yz*=rot(pit); return p; }
 vec2 map(vec3 p){
-  p.y-=HOP;
-  // тело
-  float body=sdE(p-vec3(0.,-.42,0.),vec3(.62,.72,.55));
-  vec3 h=toHead(p);
-  float head=sdE(h-HC,vec3(.58,.5,.52));
-  float d=smin(body,head,.24);
-  // ушки-пучки
-  vec3 q=h; q.x=abs(q.x); q-=vec3(.37,.84,-.05); q.xy*=rot(-.62); q.yz*=rot(.3);
-  d=smin(d,sdE(q,vec3(.095,.25,.085)),.1);
+  p=toLocal(p);
+  vec3 q=abs(p)-vec3(1.25,.85,.35);
+  float bb=length(max(q,0.));
+  if(bb>.25) return vec2(bb,0.);
+  float d=1e5;
+  for(int k=0;k<4;k++){
+    vec4 c=CH[k];
+    if(length(p-c.xyz)-c.w-.06<d){
+      for(int i=0;i<12;i++){
+        // сплайн Катмулла-Рома: каждый отрезок делим на 3 части — изгибы гладкие
+        vec3 p0=P[k*12+i], p1=P[k*12+i+1], p2=P[k*12+i+2], p3=P[k*12+i+3];
+        vec3 A=2.*p1, B=p2-p0, C=2.*p0-5.*p1+4.*p2-p3, D=-p0+3.*p1-3.*p2+p3;
+        vec3 q0=p1, q1=.5*(A+B/3.+C/9.+D/27.), q2=.5*(A+B*2./3.+C*4./9.+D*8./27.);
+        d=min(d,sdCap(p,q0,q1)); d=min(d,sdCap(p,q1,q2)); d=min(d,sdCap(p,q2,p2));
+      }
+    }
+  }
   vec2 res=vec2(d,1.);
-  // крылья (хлопают)
-  vec3 w=p; w.x=abs(w.x); w-=vec3(.55,-.04,-.06); w.xy*=rot(.2+F); w-=vec3(0.,-.32,0.);
-  res=U(res,vec2(sdE(w,vec3(.15,.47,.35)),8.));
-  // грудка
-  res=U(res,vec2(sdE(p-vec3(0.,-.47,.25),vec3(.43,.52,.32)),2.));
-  // лицевой диск
-  vec3 f=h; f.x=abs(f.x);
-  res=U(res,vec2(sdE(f-vec3(.18,.44,.4),vec3(.26,.27,.13)),7.));
-  // глаза
-  res=U(res,vec2(sdS(f-EC,.152),3.));
-  // веки (моргание + характер)
-  vec3 lp=f-EC; lp.xy*=rot(-.2);
-  float lidH=mix(-.17,.105,B);
-  res=U(res,vec2(max(sdS(f-EC,.165),lidH-lp.y),1.));
-  // клюв
-  vec3 bq=h-vec3(0.,.29,.5); bq.yz*=rot(-.4);
-  res=U(res,vec2(sdE(bq,vec3(.062,.115,.07)),5.));
-  // лапки — по три пальца
-  vec3 l=p; l.x=abs(l.x); l-=vec3(.2,-1.11,.14);
-  float ft=1e5;
-  for(int i=0;i<3;i++){ float a=(float(i)-1.)*.5; vec3 t=l; t.xz*=rot(a); ft=min(ft,sdE(t-vec3(0.,0.,.08),vec3(.048,.045,.11))); }
-  res=U(res,vec2(ft,5.));
+  vec3 dp=DOT+vec3(0.,BOUNCE+.035*sin(T*2.3),0.);
+  float s=length(p-dp)-RD;
+  if(s<res.x) res=vec2(s,2.);
   return res;
 }
 vec3 nrm(vec3 p){vec2 e=vec2(.0012,-.0012);return normalize(e.xyy*map(p+e.xyy).x+e.yyx*map(p+e.yyx).x+e.yxy*map(p+e.yxy).x+e.xxx*map(p+e.xxx).x);}
+vec3 env(vec3 d){ // окружение в цветах аватарки: синий + оранжевые пятна
+  vec3 blue=vec3(.13,.27,.95), deep=vec3(.03,.06,.25), orange=vec3(1.,.5,.32);
+  vec3 c=mix(deep,blue,smoothstep(-.6,.6,d.y));
+  c=mix(c,orange,smoothstep(.35,1.,dot(d,normalize(vec3(-.8,.5,.3))))*.85);
+  c=mix(c,orange,smoothstep(.45,1.,dot(d,normalize(vec3(.9,-.4,.2))))*.7);
+  return c;
+}
 void main(){
   vec2 uv=(gl_FragCoord.xy-.5*R)/R.y;
-  hYaw=M.x*.45; hPitch=M.y*.2; hRoll=sin(T*.9)*.05+TL;
-  look=normalize(vec3(M.x*.5,M.y*.45,1.));
-  vec3 ro=vec3(0.,.02,4.35), rd=normalize(vec3(uv*1.02,-1.6));
-  float yaw=-M.x*.22+sin(T*.5)*.12;
-  ro.xz*=rot(yaw); rd.xz*=rot(yaw);
-  ro.y-=sin(T*1.6)*.03;
-  float t=0.; vec2 hh; bool hit=false;
-  for(int i=0;i<110;i++){ hh=map(ro+rd*t); if(hh.x<.0008){hit=true;break;} t+=hh.x; if(t>9.)break; }
+  float asp=R.x/R.y;
+  yaw=M.x*.7+sin(T*.55)*.28+SPIN; pit=-M.y*.35+sin(T*.4)*.06; bob=sin(T*1.5)*.04;
+  vec3 ro=vec3(0.,0.,3.6*max(1.,1.25/asp)), rd=normalize(vec3(uv,-1.6));
+  float t=0.; vec2 h; bool hit=false;
+  for(int i=0;i<90;i++){ h=map(ro+rd*t); if(h.x<.0009&&h.y>0.){hit=true;break;} t+=max(h.x,.002); if(t>9.)break; }
   if(!hit){
-    // мягкая тень на «полу»
-    if(rd.y<0.){ float tp=(-1.17-ro.y)/rd.y; vec3 g=ro+rd*tp; float r=length(g.xz*vec2(1.,1.5));
-      float a=(1.-smoothstep(.15,.9+HOP,r))*.6*(1.-HOP*2.);
-      gl_FragColor=vec4(.0,.02,.09,max(a,0.)); return; }
+    if(rd.y<0.){ float tp=(-.95-ro.y)/rd.y; vec3 g=ro+rd*tp; float r=length(g.xz*vec2(.65,1.6));
+      float a=(1.-smoothstep(.1,1.,r))*.5; gl_FragColor=vec4(.01,.02,.1,a); return; }
     gl_FragColor=vec4(0.); return;
   }
   vec3 p=ro+rd*t, n=nrm(p), v=-rd;
-  vec3 ph=p; ph.y-=HOP;
-  vec3 L1=normalize(vec3(-.55,.85,.75)), L2=normalize(vec3(.95,.25,-.4)), L3=normalize(vec3(0.,-.3,1.));
-  float m=hh.y; vec3 col; float spk=.7, shin=48.;
-  if(m<1.5){ // перья тела
-    col=vec3(.12,.34,1.);
-    float row=fract(ph.y*8.5+.18*sin(ph.x*16.));
-    col*=1.-.16*smoothstep(.62,1.,row);
-    col=mix(col,vec3(.3,.55,1.),smoothstep(.55,1.15,ph.y)*.35); // светлее к макушке
-  } else if(m<2.5){ // грудка с узором-«галочками»
-    col=vec3(.9,.93,1.);
-    float u=ph.y*7.5-abs(ph.x)*2.4;
-    float ln=1.-smoothstep(.0,.055,abs(fract(u)-.5));
-    float dash=step(.45,fract(ph.x*5.+floor(u)*.5));
-    col=mix(col,vec3(.42,.6,1.),ln*dash*.75);
-  } else if(m<3.5){ // глаз: белок, радужка, зрачок
-    vec3 h=ph-HC; h.xz*=rot(hYaw); h.yz*=rot(hPitch); h.xy*=rot(hRoll); h+=HC;
-    float sx=sign(h.x); h.x=abs(h.x);
-    vec3 d=normalize(h-EC); vec3 lk=look; lk.x*=sx;
-    float c=dot(d,lk);
-    col=vec3(.98,.99,1.);
-    vec3 iris=mix(vec3(.05,.35,1.),vec3(.45,.85,1.),smoothstep(.86,.95,c));
-    col=mix(col,iris,smoothstep(.835,.85,c));
-    col=mix(col,vec3(.01,.02,.06),smoothstep(.935,.945,c));
-    col=mix(col,vec3(.03,.1,.35),(1.-smoothstep(.83,.86,c))*smoothstep(.8,.83,c)); // ободок
-    spk=1.4; shin=160.;
-  } else if(m<5.5){ col=vec3(1.,.74,.16); shin=60.; } // клюв, лапки
-  else if(m<7.5){ // лицевой диск
-    col=vec3(.82,.88,1.);
-  } else { // крылья: тёмные + светлые кончики перьев
-    col=vec3(.07,.24,.85);
-    float st=smoothstep(.5,.56,fract(ph.y*6.+abs(ph.x)*1.5));
-    col=mix(col,vec3(.4,.62,1.),st*smoothstep(-.25,-.6,ph.y)*.8);
-  }
-  float dif=max(dot(n,L1),0.), wrap=max((dot(n,L1)+.4)/1.4,0.);
-  float dif2=max(dot(n,L2),0.), dif3=max(dot(n,L3),0.);
-  float amb=.5+.5*n.y;
-  vec3 hv=normalize(L1+v); float sp=pow(max(dot(n,hv),0.),shin);
+  vec3 L1=normalize(vec3(-.5,.8,.8)), L2=normalize(vec3(.9,-.2,.4));
+  float dif=max(dot(n,L1),0.), dif2=max(dot(n,L2),0.);
   float fr=pow(1.-max(dot(n,v),0.),3.);
-  vec3 c=col*(mix(dif,wrap,.5)*1.05+amb*.22+dif3*.12)+col*dif2*vec3(.4,.55,1.)*.7;
-  c+=sp*spk;
-  c+=fr*vec3(.4,.62,1.)*.85;
-  float ao=clamp(map(p+n*.07).x/.07,0.,1.); c*=.5+.5*ao;
-  c=pow(c,vec3(.92));
-  gl_FragColor=vec4(c,1.);
+  vec3 refl=env(reflect(rd,n));
+  vec3 c;
+  if(h.y<1.5){ // белая глянцевая трубка
+    vec3 base=vec3(.97,.98,1.);
+    c=base*(.5+dif*.55)+vec3(1.,.62,.45)*dif2*.22+env(n)*.12;
+    c=mix(c,refl,.07+fr*.42);
+    c+=pow(max(dot(n,normalize(L1+v)),0.),60.)*.7;
+  } else { // оранжевая точка
+    vec3 base=vec3(1.,.53,.29);
+    c=base*(.45+dif*.7)+base*.25;
+    c=mix(c,refl,fr*.35);
+    c+=pow(max(dot(n,normalize(L1+v)),0.),90.)*.8;
+  }
+  float ao=clamp(map(p+n*.06).x/.06,0.,1.); c*=.65+.35*ao;
+  gl_FragColor=vec4(pow(c,vec3(.95)),1.);
 }`;
   function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS)){console.warn(gl.getShaderInfoLog(o));return null;}return o;}
-  const pr=gl.createProgram(); const a=sh(gl.VERTEX_SHADER,vs), b=sh(gl.FRAGMENT_SHADER,fs);
-  if(!a||!b){c.style.display='none';return;}
-  gl.attachShader(pr,a); gl.attachShader(pr,b); gl.linkProgram(pr); gl.useProgram(pr);
+  const pr=gl.createProgram(); const va=sh(gl.VERTEX_SHADER,vs), fa=sh(gl.FRAGMENT_SHADER,fs);
+  if(!va||!fa){c.style.display='none';return;}
+  gl.attachShader(pr,va); gl.attachShader(pr,fa); gl.linkProgram(pr); gl.useProgram(pr);
   gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
   const buf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,buf);
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
   const loc=gl.getAttribLocation(pr,'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
   const U=n=>gl.getUniformLocation(pr,n);
-  const uR=U('R'),uT=U('T'),uM=U('M'),uB=U('B'),uF=U('F'),uH=U('HOP'),uTL=U('TL');
+  gl.uniform3fv(U('P'),PTS); gl.uniform4fv(U('CH'),CH);
+  const uR=U('R'),uT=U('T'),uM=U('M'),uS=U('SPIN'),uB=U('BOUNCE');
 
   let mx=0,my=0,tx=0,ty=0;
   addEventListener('pointermove',e=>{const r=c.getBoundingClientRect(); tx=Math.max(-1,Math.min(1,(e.clientX-(r.left+r.width/2))/(innerWidth/2))); ty=Math.max(-1,Math.min(1,-(e.clientY-(r.top+r.height/2))/(innerHeight/2)));});
-  function size(){ const d=Math.min(devicePixelRatio||1,1.75); const r=c.getBoundingClientRect(); c.width=Math.max(1,r.width*d|0); c.height=Math.max(1,r.height*d|0); gl.viewport(0,0,c.width,c.height); }
+  function size(){ const d=Math.min(devicePixelRatio||1, innerWidth<620?1.25:1.5); const r=c.getBoundingClientRect(); c.width=Math.max(1,r.width*d|0); c.height=Math.max(1,r.height*d|0); gl.viewport(0,0,c.width,c.height); }
   size(); addEventListener('resize',size);
   let visible=true; new IntersectionObserver(es=>{visible=es[0].isIntersecting;}).observe(c);
-  const t0=performance.now();
-  let nextBlink=2500, hopAt=4000, tiltAt=7000, tilt=0, tiltTarget=0;
+  const t0=performance.now(), rand=(a,b)=>a+Math.random()*(b-a);
+  let spinAt=-1e9, bounceAt=2500, bounceAmp=.22;
   c.style.cursor='pointer';
-  c.addEventListener('click',()=>{ const ms=performance.now()-t0; if(ms-hopAt>800) hopAt=ms; });
+  c.addEventListener('click',()=>{ const ms=performance.now()-t0; if(ms-spinAt>1100){ spinAt=ms; bounceAt=ms; bounceAmp=.42; } });
+  const easeIO=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
   function loop(now){
     requestAnimationFrame(loop);
     if(!visible) return;
-    const ms=now-t0, t=ms/1000;
+    const ms=now-t0;
     mx+=(tx-mx)*.06; my+=(ty-my)*.06;
-    // моргание
-    let bl=1; if(ms>nextBlink){ const k=(ms-nextBlink)/170; bl=k<1?Math.abs(1-k*2):1; if(k>=1) nextBlink=ms+rand(2200,5200); }
-    // прыжок + взмахи крыльями
-    let hop=0, flap=0; const hk=(ms-hopAt)/750;
-    if(hk>=0 && hk<1){ hop=Math.sin(Math.PI*hk)*.16; flap=Math.sin(hk*Math.PI*5)*.55*(1-hk); }
-    else if(hk>=1 && ms>hopAt+rand(6000,9000)) hopAt=ms;
-    // любопытный наклон головы
-    if(ms>tiltAt){ tiltTarget = tiltTarget? 0 : (Math.random()<.5?-1:1)*.22; tiltAt=ms+(tiltTarget?1400:rand(4000,7000)); }
-    tilt+=(tiltTarget-tilt)*.08;
+    // клик — полный оборот
+    const sk=(ms-spinAt)/1000, spin=sk>=0&&sk<1?easeIO(sk)*Math.PI*2:0;
+    // оранжевая точка иногда подпрыгивает
+    let bounce=0; const bk=(ms-bounceAt)/650;
+    if(bk>=0&&bk<1){ bounce=Math.sin(Math.PI*bk)*bounceAmp; } else if(bk>=1&&ms>bounceAt+rand(3200,5200)){ bounceAt=ms; bounceAmp=.22; }
     gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform2f(uR,c.width,c.height); gl.uniform1f(uT,t); gl.uniform2f(uM,mx,my);
-    gl.uniform1f(uB,Math.max(0,bl)); gl.uniform1f(uF,flap); gl.uniform1f(uH,hop); gl.uniform1f(uTL,tilt);
+    gl.uniform2f(uR,c.width,c.height); gl.uniform1f(uT,ms/1000); gl.uniform2f(uM,mx,my);
+    gl.uniform1f(uS,spin); gl.uniform1f(uB,bounce);
     gl.drawArrays(gl.TRIANGLES,0,3);
   }
-  function rand(a,b){return a+Math.random()*(b-a);}
   requestAnimationFrame(loop);
 })();
-
 
 /* =====================================================================
    ВИДЕО-ПРИМЕР: громкость + увеличение видео и фото
