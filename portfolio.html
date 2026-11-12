@@ -426,6 +426,12 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
    ПОРТФОЛИО — чтобы добавить работу, допишите объект в этот список
    ===================================================================== */
 const WORKS = [
+  { cat:'ads', client:'stayer', title:'Розовый горнолыжный комбинезон', titleEn:'Pink ski suit',
+     type:'Реклама одежды · 9:16', typeEn:'Apparel ad · 9:16', tags:['Seedance','Fashion'], tagsEn:['Seedance','Fashion'],
+     src:'assets/works/stayer-pink.mp4', poster:'assets/works/stayer-pink.jpg' },
+  { cat:'ads', client:'', title:'Горнолыжная куртка на склоне', titleEn:'Ski jacket on the slopes',
+     type:'UGC-реклама · 9:16', typeEn:'UGC ad · 9:16', tags:['Seedance','UGC'], tagsEn:['Seedance','UGC'],
+     src:'assets/works/ski-red.mp4', poster:'assets/works/ski-red.jpg' },
   { cat:'ads', client:'stayer', title:'Горнолыжная куртка и брюки', titleEn:'Ski jacket & pants',
      type:'Реклама одежды · 9:16', typeEn:'Apparel ad · 9:16', tags:['Seedance','Из фото в ролик'], tagsEn:['Seedance','Photo to video'],
      src:'assets/stayer/video.mp4', poster:'assets/stayer/poster.jpg' },
@@ -440,9 +446,9 @@ function render(){
   const g=document.getElementById('pfGrid');
   g.innerHTML=WORKS.filter(w=>cat==='all'||w.cat===cat).map((w,i)=>`
     <article class="pf-card" data-i="${WORKS.indexOf(w)}">
-      <div class="pf-media"><img src="${w.poster}" alt="${w.client}" loading="lazy"><video src="${w.src}" muted loop playsinline preload="none"></video>
+      <div class="pf-media"><img src="${w.poster}" alt="${tr(w.title,w.titleEn)}" loading="lazy"><video src="${w.src}" muted loop playsinline preload="none"></video>
         <span class="pf-play"><svg viewBox="0 0 24 24" fill="#fff"><path d="M7 4.5v15l13-7.5z"/></svg></span></div>
-      <div class="pf-info"><div class="mono">${w.client} · ${tr(w.type,w.typeEn)}</div><h3>${tr(w.title,w.titleEn)}</h3>
+      <div class="pf-info"><div class="mono">${w.client?w.client+' · ':''}${tr(w.type,w.typeEn)}</div><h3>${tr(w.title,w.titleEn)}</h3>
         <div class="tags">${(window.LANG==='en'?w.tagsEn:w.tags).map(t=>`<span>${t}</span>`).join('')}</div></div>
     </article>`).join('') + `
     <div class="pf-soon"><span class="mono">${tr('Скоро','Coming soon')}</span><h3>${tr('Здесь будет ваш ролик','Your video could be here')}</h3>
