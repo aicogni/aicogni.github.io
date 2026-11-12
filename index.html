@@ -13,6 +13,7 @@
 <script>
   // Скрываем слои до сборки (если JS выключен — сайт просто виден целиком)
   document.documentElement.classList.add('js-build');
+  window.LANG='ru'; window.tr=(ru,en)=>window.LANG==='en'?en:ru;
 </script>
 <style>
 :root{
@@ -65,6 +66,11 @@ button,input{font:inherit;color:inherit}
 .nav-links{display:flex;gap:26px;font-size:14px;color:var(--mute)}
 .nav-links a:hover{color:var(--white)}
 .nav-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.lang{background:transparent;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:border-color .2s}
+.lang:hover{border-color:#fff}
+.lang b{font-weight:500;opacity:.5;transition:opacity .2s,color .2s}
+.lang b.on{opacity:1;color:#fff}
+.lang i{font-style:normal;opacity:.35}
 .pill{font-family:var(--mono);font-size:11px;letter-spacing:.1em;border:1px solid var(--line-2);padding:6px 10px;border-radius:999px;color:var(--blue-3)}
 .btn{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 18px;border-radius:10px;font-size:14px;font-weight:600;border:1px solid transparent;cursor:pointer;transition:transform .2s, background .2s, border-color .2s}
 .btn:hover{transform:translateY(-1px)}
@@ -303,7 +309,6 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
 @media (max-width:620px){
   .wrap{padding:0 16px}
   .nav .wrap{gap:12px}
-  .nav-right .pill{display:none}
   .hero{padding:40px 0 40px}
   .owl-box{height:300px}
   #owl{height:300px;max-width:280px}
@@ -344,7 +349,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
       <a href="#contact" data-b="nav">Контакты</a>
     </nav>
     <div class="nav-right">
-      <span class="pill" data-b="pill">RU</span>
+      <button class="pill lang" id="langBtn" type="button" data-b="pill" aria-label="Switch to English" title="Switch to English"><b class="on" data-l="ru">RU</b><i>/</i><b data-l="en">EN</b></button>
       <a href="https://t.me/aicogni1" target="_blank" rel="noopener" class="btn btn-w btn-s" data-b="button">Связаться</a>
     </div>
   </div>
@@ -850,9 +855,9 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
       drew=true; drewLabel=true;
       youA=Math.min(1,youA+dt/600);
       ctx.globalAlpha=youA; ctx.font='500 10px "JetBrains Mono", monospace';
-      const lx=mouse.x+14, ly=mouse.y+20, tw=ctx.measureText('Вы').width+12;
+      const lx=mouse.x+14, ly=mouse.y+20, tw=ctx.measureText(tr('Вы','You')).width+12;
       ctx.fillStyle='#3a78ff'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(lx,ly,tw,17,5) : ctx.rect(lx,ly,tw,17); ctx.fill();
-      ctx.fillStyle='#fff'; ctx.fillText('Вы',lx+6,ly+12); ctx.globalAlpha=1; labelBox=[lx,ly,tw,17];
+      ctx.fillStyle='#fff'; ctx.fillText(tr('Вы','You'),lx+6,ly+12); ctx.globalAlpha=1; labelBox=[lx,ly,tw,17];
     }
     lastDrew=drew; lastLabelOnly=drewLabel && !drewOther;
     hudUpdate();
@@ -1062,7 +1067,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
   new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting) play(); else if(!lbOpen) v.pause(); }); },{threshold:.25}).observe(v);
 
   // ---- звук ----
-  function paint(){ const val=+vol.value; vol.style.setProperty('--v',val+'%'); const m=v.muted||val===0; mute.classList.toggle('muted',m); mute.setAttribute('aria-label',m?'Включить звук':'Выключить звук'); pct.textContent=(m?0:val)+'%'; }
+  function paint(){ const val=+vol.value; vol.style.setProperty('--v',val+'%'); const m=v.muted||val===0; mute.classList.toggle('muted',m); mute.setAttribute('aria-label',m?tr('Включить звук','Unmute'):tr('Выключить звук','Mute')); pct.textContent=(m?0:val)+'%'; }
   vol.addEventListener('input',()=>{ const val=+vol.value; v.volume=val/100; v.muted=val===0; if(!v.muted) play(); paint(); });
   mute.addEventListener('click',e=>{ e.stopPropagation(); if(v.muted||+vol.value===0){ if(+vol.value===0) vol.value=70; v.volume=vol.value/100; v.muted=false; play(); } else v.muted=true; paint(); });
   vol.addEventListener('click',e=>e.stopPropagation());
@@ -1193,7 +1198,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
         for(let k=0;k<6;k++){ const a=Math.random()*Math.PI*2; sparks.push({x:P3.x,y:P3.y,vx:Math.cos(a)*2.4,vy:Math.sin(a)*2.4,c:col,t:0}); }
       }
     }
-    txt.textContent = t<TOTAL ? 'собираем ролик · '+landed.size+' / '+N : 'ролик готов · '+N+' / '+N;
+    txt.textContent = t<TOTAL ? tr('собираем ролик · ','building the ad · ')+landed.size+' / '+N : tr('ролик готов · ','ad ready · ')+N+' / '+N;
     if(t>=TOTAL && !doneAt){ doneAt=now; setTimeout(()=>imgs.forEach(im=>im.classList.remove('used')),500); }
     for(let k=sparks.length-1;k>=0;k--){ const s=sparks[k]; s.t+=dt; if(s.vx!==undefined){ s.x+=s.vx; s.y+=s.vy; s.vx*=.92; s.vy*=.92; }
       const a=1-s.t/700; if(a<=0){ sparks.splice(k,1); continue; }
@@ -1272,6 +1277,37 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
     }
   }
   requestAnimationFrame(draw);
+})();
+
+/* =====================================================================
+   ЯЗЫК: RU по умолчанию, кнопка RU/EN переключает весь сайт одним нажатием
+   ===================================================================== */
+(function(){
+  const T={"Из фото в ролик": "Photo to video", "Услуги": "Services", "Форматы": "Formats", "Процесс": "Process", "Контакты": "Contact", "Связаться": "Contact us", "<span class=\"dot\"></span>Независимая AI-продакшн команда · видео / персонажи / реклама": "<span class=\"dot\"></span>Independent AI production team · video / characters / ads", "Снимаем то,": "We film", "что нельзя снять.": "the unfilmable.", "<strong>AI cogni</strong> — команда, которая делает рекламу, клипы и персонажей с помощью нейросетей. Сценарий, 3D-превиз, генерация и монтаж — под ключ, с контролем каждого кадра.": "<strong>AI cogni</strong> is a team that makes ads, music videos and characters with neural networks. Script, 3D previs, generation and editing — end to end, with control over every frame.", "Обсудить проект": "Discuss a project", "Как мы работаем →": "How we work →", "Финальный рендер": "Final render", "Вертикаль и горизонт": "Vertical &amp; horizontal", "Превиз сцены": "Scene previs", "Окно контакта": "Point of contact", "Из фото одежды": "From clothing photos", "в готовый ролик.": "to a finished ad.", "Пришлите обычные снимки товара — на манекене, на вешалке, крупные планы. Мы превратим их в рекламный ролик с живым героем, локацией и камерой в движении. Как после выездной съёмки в горах — только без выезда, моделей и съёмочной группы.": "Send us ordinary product shots — on a mannequin, on a hanger, close-ups. We turn them into an ad with a living hero, a real-looking location and a moving camera. Like a mountain location shoot — without the trip, the models or the crew.", "Было · 8 фото от бренда": "Before · 8 photos from the brand", "референсы": "references", "Стало · рекламный ролик 9:16": "After · 9:16 ad", "Без студии и выезда": "No studio, no travel", "Горы, город или студия — локацию создаём под бренд, а не ищем и не арендуем.": "Mountains, city or studio — we create the location for the brand instead of scouting and renting it.", "Вещь — как на фото": "The product, true to life", "Цвет ткани, молнии, нашивки и логотипы остаются такими же, как у настоящего изделия.": "Fabric color, zippers, patches and logos stay exactly as on the real garment.", "Под любые площадки": "Ready for any platform", "Вертикаль для Reels и TikTok, горизонталь для сайта и маркетплейсов.": "Vertical for Reels and TikTok, horizontal for websites and marketplaces.", "Что мы делаем": "What we do", "Берём задачу целиком: от идеи и персонажа до готового ролика в нужном формате. Нейросети — инструмент, режиссура — наша.": "We take on the whole job: from idea and character to a finished video in the right format. AI is the tool — the direction is ours.", "Рекламные ролики": "Commercials", "Продуктовые и бьюти-ролики на 10–30 секунд: раскадровка, генерация, цвет и звук.": "Product and beauty spots, 10–30 seconds: storyboard, generation, color and sound.", "Музыкальные клипы": "Music videos", "Сцены, которые дорого или невозможно снять: космос, пустые ангары, робо-камеры.": "Scenes that are too expensive or impossible to film: space, empty hangars, robotic cameras.", "AI-персонажи": "AI characters", "Персонажи с закреплённой внешностью и гардеробом — для серий, брендов и маскотов.": "Characters with locked looks and wardrobe — for series, brands and mascots.", "Превиз и 3D": "Previs &amp; 3D", "Собираем сцену в Blender, чтобы камера и движение были точными ещё до генерации.": "We build the scene in Blender so camera and motion are precise before generation even starts.", "Клип": "Clip", "Камера": "Camera", "Результат — в кадре,": "Results on screen,", "а не в обещаниях.": "not in promises.", "С чем к нам приходят. Каждый формат собираем по своему пайплайну — от референсов до финального экспорта.": "What clients come to us with. Each format has its own pipeline — from references to final export.", "[Формат 01] Продукт": "[Format 01] Product", "Продуктовая реклама": "Product ads", "Техника, одежда, гаджеты: продукт в сценах, которые не снять в студии.": "Electronics, apparel, gadgets: your product in scenes no studio can shoot.", "Обсудить →": "Discuss →", "[Формат 02] Beauty": "[Format 02] Beauty", "Бьюти и косметика": "Beauty &amp; cosmetics", "Текстуры, блеск, макро и персонаж бренда в одном ролике.": "Textures, shine, macro shots and the brand character in one video.", "[Формат 03] Music": "[Format 03] Music", "Музыкальный клип": "Music video", "Кинематографичные сцены, сложные пролёты камеры, липсинк.": "Cinematic scenes, complex camera flights, lip-sync.", "[Формат 04] Animation": "[Format 04] Animation", "Анимация и мультфильм": "Animation &amp; cartoons", "Свой визуальный стиль, мудборд, персонажи и серия эпизодов.": "A visual style of your own, mood board, characters and an episode series.", "[Формат 05] Social": "[Format 05] Social", "Рилсы и контент": "Reels &amp; content", "Вертикальные ролики и AI-инфлюенсеры для соцсетей бренда.": "Vertical videos and AI influencers for the brand's social media.", "Мы строим кадры,": "We build shots,", "а не ловим удачу.": "not lucky accidents.", "Генерация без системы — лотерея. Мы держим персонажа, свет и камеру под контролем на каждом шаге.": "Generation without a system is a lottery. We keep character, light and camera under control at every step.", "Бриф и идея": "Brief &amp; idea", "Разбираем задачу, пишем сценарий и собираем референсы.": "We break down the task, write the script and gather references.", "Персонажи и мир": "Characters &amp; world", "Закрепляем внешность, гардероб и стиль, делаем character sheet.": "We lock looks, wardrobe and style, and build a character sheet.", "Превиз": "Previs", "Раскадровка и 3D-превиз: камера, движение и тайминг.": "Storyboard and 3D previs: camera, motion and timing.", "Генерация и монтаж": "Generation &amp; edit", "Генерируем шоты, собираем, красим и сдаём в нужных форматах.": "We generate shots, cut, color-grade and deliver in the formats you need.", "Есть идея, которую сложно снять?": "Got an idea that's hard to film?", "Напишите нам в Telegram — расскажите о задаче, а мы предложим, как сделать её в AI.": "Message us on Telegram — tell us about the task and we'll suggest how to make it with AI.", "Написать в Telegram": "Message on Telegram", "Наши работы в Instagram · <b>@ai_cogni</b>": "Our work on Instagram · <b>@ai_cogni</b>", "Обсудим формат, сроки и бюджет вашего ролика": "Let's talk format, timing and budget for your video", "Независимая AI-продакшн команда: реклама, клипы, персонажи и анимация.": "Independent AI production team: ads, music videos, characters and animation.", "Реклама": "Ads", "Клипы": "Music videos", "Команда": "Team", "Сотрудничество": "Work with us", "© 2026 AI cogni · независимая AI-продакшн команда": "© 2026 AI cogni · independent AI production team", "Собрано агентами · ru": "Built by agents · en", "Закрыть ✕": "Close ✕", "← Назад": "← Prev", "Вперёд →": "Next →"};
+  const btn=document.getElementById('langBtn'); if(!btn) return;
+  const items=[];
+  document.querySelectorAll('body *:not(script):not(style):not(canvas):not(svg):not(path)').forEach(el=>{
+    const h=el.innerHTML.trim();
+    if(Object.prototype.hasOwnProperty.call(T,h)) items.push({el,ru:h,en:T[h]});
+  });
+  const META={ru:{title:document.title,desc:document.querySelector('meta[name=description]').content},
+              en:{title:'AI cogni — AI production team',desc:'AI cogni is a team that makes ads, music videos and characters with neural networks.'}};
+  function apply(lang){
+    window.LANG=lang;
+    document.documentElement.lang=lang;
+    items.forEach(({el,ru,en})=>{
+      const html= lang==='en'?en:ru;
+      el.innerHTML=html;
+      if(el.dataset.orig!==undefined) el.dataset.orig=el.textContent;   // для «печатающихся» заголовков
+    });
+    document.title=META[lang].title; document.querySelector('meta[name=description]').content=META[lang].desc;
+    btn.querySelectorAll('b').forEach(b=>b.classList.toggle('on',b.dataset.l===lang));
+    const next= lang==='en'?'На русский':'Switch to English';
+    btn.setAttribute('aria-label',next); btn.title=next;
+    const m=document.getElementById('vMute'); if(m) m.setAttribute('aria-label', m.classList.contains('muted')?tr('Включить звук','Unmute'):tr('Выключить звук','Mute'));
+    const ft=document.getElementById('flowTxt'); if(ft && /8 \/ 8/.test(ft.textContent)) ft.textContent=tr('ролик готов · ','ad ready · ')+'8 / 8';
+  }
+  btn.addEventListener('click',()=>apply(window.LANG==='en'?'ru':'en'));
 })();
 </script>
 </body>
