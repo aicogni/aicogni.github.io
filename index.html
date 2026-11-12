@@ -646,7 +646,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
   function reset(){
     els.forEach(e=>{e.classList.remove('on','instant'); if(e.dataset.orig!==undefined) e.textContent=e.dataset.orig;});
     window.scrollTo(0,0);
-    pending=els.filter(e=>{ if(e.getClientRects().length) return true; e.classList.add('on','instant'); return false; }); jobs=[]; sparks=[]; done=els.length-pending.length; clock=0; workTime=0; idleSince=0; state='intro'; paused=false;
+    introSpark=false; pending=els.filter(e=>{ if(e.getClientRects().length) return true; e.classList.add('on','instant'); return false; }); jobs=[]; sparks=[]; done=els.length-pending.length; clock=0; workTime=0; idleSince=0; state='intro'; paused=false;
     btnPause.textContent='Пауза'; btnPause.style.display=''; btnSkip.textContent='Пропустить'; btnSkip.classList.remove('pri');
     hud.classList.remove('hide');
     makeAgents();
@@ -750,6 +750,49 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
     ctx.globalAlpha=1;
   }
 
+
+  // ---------- заставка: агент «рисует» логотип AI cogni, точка падает сверху ----------
+  const LOGO=[[-185.0, 72.0], [-185.4, 69.2], [-186.0, 65.3], [-186.8, 60.8], [-187.4, 55.8], [-187.9, 50.8], [-188.0, 46.0], [-187.8, 41.4], [-187.4, 36.7], [-186.8, 31.9], [-186.0, 27.1], [-185.1, 22.5], [-184.0, 18.0], [-182.8, 13.7], [-181.3, 9.4], [-179.8, 5.3], [-178.0, 1.3], [-176.1, -2.5], [-174.0, -6.0], [-171.7, -9.3], [-169.3, -12.5], [-166.6, -15.4], [-163.9, -18.2], [-161.0, -20.7], [-158.0, -23.0], [-154.9, -25.1], [-151.7, -26.9], [-148.4, -28.6], [-145.0, -30.0], [-141.5, -31.1], [-138.0, -32.0], [-134.4, -32.6], [-130.7, -32.9], [-126.9, -32.9], [-123.1, -32.8], [-119.5, -32.5], [-116.0, -32.0], [-112.7, -31.4], [-109.5, -30.7], [-106.4, -29.9], [-103.5, -28.8], [-100.7, -27.5], [-98.0, -26.0], [-95.5, -24.2], [-93.1, -22.3], [-90.8, -20.1], [-88.7, -17.7], [-86.8, -15.0], [-85.0, -12.0], [-83.3, -8.6], [-81.8, -4.7], [-80.4, -0.6], [-79.2, 3.6], [-78.4, 7.9], [-78.0, 12.0], [-78.0, 16.1], [-78.4, 20.3], [-79.1, 24.5], [-80.1, 28.6], [-81.4, 32.5], [-83.0, 36.0], [-84.9, 39.3], [-87.1, 42.5], [-89.7, 45.4], [-92.4, 48.1], [-95.2, 50.3], [-98.0, 52.0], [-100.9, 53.2], [-103.9, 54.0], [-107.1, 54.4], [-110.2, 54.4], [-113.2, 53.9], [-116.0, 53.0], [-118.7, 51.5], [-121.3, 49.5], [-123.9, 47.0], [-126.2, 44.2], [-128.3, 41.1], [-130.0, 38.0], [-131.4, 34.6], [-132.4, 30.9], [-133.2, 27.0], [-133.8, 23.0], [-134.0, 18.9], [-134.0, 15.0], [-133.7, 11.0], [-133.0, 6.9], [-132.1, 2.8], [-131.0, -1.1], [-129.6, -4.8], [-128.0, -8.0], [-126.2, -10.7], [-124.1, -13.0], [-121.8, -15.1], [-119.3, -16.9], [-116.7, -18.5], [-114.0, -20.0], [-111.2, -21.5], [-108.2, -22.8], [-105.1, -23.9], [-101.8, -24.9], [-98.5, -25.6], [-95.0, -26.0], [-91.4, -26.1], [-87.5, -26.0], [-83.5, -25.7], [-79.5, -25.1], [-75.6, -24.2], [-72.0, -23.0], [-68.5, -21.5], [-65.1, -19.6], [-61.9, -17.4], [-58.7, -15.1], [-55.8, -12.6], [-53.0, -10.0], [-50.5, -7.2], [-48.1, -4.0], [-45.9, -0.8], [-43.9, 2.5], [-41.9, 5.5], [-40.0, 8.0], [-38.2, 10.3], [-36.4, 12.6], [-34.8, 14.6], [-33.2, 16.1], [-31.6, 17.0], [-30.0, 17.0], [-28.3, 16.0], [-26.7, 14.0], [-25.0, 11.4], [-23.3, 8.4], [-21.7, 5.2], [-20.0, 2.0], [-18.3, -1.4], [-16.5, -5.3], [-14.8, -9.3], [-13.0, -13.3], [-11.4, -16.9], [-10.0, -20.0], [-8.8, -22.6], [-7.8, -25.1], [-6.9, -27.2], [-6.1, -28.8], [-5.1, -29.8], [-4.0, -30.0], [-2.7, -29.3], [-1.3, -27.7], [0.2, -25.5], [1.8, -22.9], [3.4, -20.0], [5.0, -17.0], [6.7, -13.7], [8.4, -9.9], [10.2, -5.9], [11.9, -1.9], [13.6, 1.9], [15.0, 5.0], [16.2, 7.8], [17.2, 10.5], [18.1, 12.9], [18.9, 14.7], [19.9, 15.9], [21.0, 16.0], [22.3, 15.0], [23.7, 12.9], [25.1, 10.1], [26.7, 6.8], [28.3, 3.3], [30.0, 0.0], [31.9, -3.5], [33.9, -7.4], [36.1, -11.5], [38.2, -15.5], [40.2, -19.1], [42.0, -22.0], [43.5, -24.4], [44.9, -26.4], [46.1, -28.0], [47.3, -29.2], [48.6, -29.9], [50.0, -30.0], [51.5, -29.5], [53.0, -28.4], [54.6, -26.9], [56.2, -24.9], [58.0, -22.6], [60.0, -20.0], [62.2, -17.0], [64.6, -13.6], [67.1, -9.8], [69.7, -5.9], [72.3, -1.9], [75.0, 2.0], [77.7, 5.9], [80.4, 9.9], [83.2, 13.9], [86.0, 17.9], [89.0, 21.6], [92.0, 25.0], [95.1, 28.1], [98.3, 30.9], [101.6, 33.6], [105.0, 36.0], [108.5, 38.1], [112.0, 40.0], [115.7, 41.6], [119.4, 43.0], [123.3, 44.2], [127.2, 45.1], [131.1, 45.7], [135.0, 46.0], [138.9, 46.0], [142.9, 45.8], [146.8, 45.2], [150.7, 44.4], [154.5, 43.4], [158.0, 42.0], [161.4, 40.3], [164.7, 38.4], [167.8, 36.1], [170.8, 33.6], [173.5, 30.9], [176.0, 28.0], [178.3, 24.8], [180.3, 21.3], [182.2, 17.6], [183.8, 13.8], [185.1, 9.9], [186.0, 6.0], [186.6, 2.1], [186.9, -2.0], [186.8, -6.1], [186.5, -10.1], [185.9, -14.2], [185.0, -18.0], [183.8, -21.7], [182.3, -25.4], [180.6, -29.1], [178.6, -32.6], [176.4, -35.9], [174.0, -39.0], [171.4, -42.0], [168.6, -44.9], [165.6, -47.7], [162.4, -50.2], [159.2, -52.3], [156.0, -54.0], [152.7, -55.2], [149.3, -56.1], [145.8, -56.6], [142.4, -56.7], [139.1, -56.5], [136.0, -56.0], [133.1, -55.1], [130.4, -53.8], [127.8, -52.1], [125.3, -50.2], [123.0, -48.2], [121.0, -46.0], [119.2, -43.5], [117.5, -40.5], [116.1, -37.4], [114.8, -34.4], [113.8, -31.8], [113, -30]], LDOT=[160, -83];
+  const LLEN=(()=>{ const L=[0]; for(let i=1;i<LOGO.length;i++) L.push(L[i-1]+Math.hypot(LOGO[i][0]-LOGO[i-1][0],LOGO[i][1]-LOGO[i-1][1])); return L; })();
+  const easeIO=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+  let introSpark=false;
+  function drawIntro(){
+    const sc=Math.min(.42, W/900), cx=W/2, cy=H/2;
+    const P=i=>[cx+LOGO[i][0]*sc, cy+LOGO[i][1]*sc];
+    const fadeOut = clock>1550 ? Math.max(0,1-(clock-1550)/350) : 1;
+    const grow = 1+Math.max(0,clock-1550)/350*.12;
+    ctx.save(); ctx.globalAlpha=fadeOut;
+    ctx.translate(cx,cy); ctx.scale(grow,grow); ctx.translate(-cx,-cy);
+    // мягкое свечение
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,220*sc/.42);
+    g.addColorStop(0,'rgba(255,170,130,.22)'); g.addColorStop(1,'rgba(255,170,130,0)');
+    ctx.fillStyle=g; ctx.fillRect(cx-300,cy-300,600,600);
+    // линия логотипа рисуется
+    const pr=easeIO(Math.min(1,Math.max(0,(clock-120)/1050)));
+    const target=pr*LLEN[LLEN.length-1];
+    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=30*sc; ctx.strokeStyle='#fff';
+    ctx.shadowColor='rgba(255,255,255,.55)'; ctx.shadowBlur=14;
+    ctx.beginPath(); let tip=P(0); ctx.moveTo(tip[0],tip[1]);
+    for(let i=1;i<LOGO.length;i++){
+      if(LLEN[i]<=target){ tip=P(i); ctx.lineTo(tip[0],tip[1]); }
+      else { const a=P(i-1), b=P(i), k=(target-LLEN[i-1])/(LLEN[i]-LLEN[i-1]); tip=[a[0]+(b[0]-a[0])*k, a[1]+(b[1]-a[1])*k]; ctx.lineTo(tip[0],tip[1]); break; }
+    }
+    if(target>0) ctx.stroke();
+    ctx.shadowBlur=0;
+    // агент-«ручка» ведёт линию
+    if(pr>0 && pr<1) arrow(tip[0]+6,tip[1]+4,0,'#ffc93d',1.1);
+    // оранжевая точка падает и подпрыгивает
+    if(clock>1150){
+      const k=Math.min(1,(clock-1150)/420);
+      const bounce = k<.6 ? -(1-k/.6)*(1-k/.6)*140 : -Math.sin((k-.6)/.4*Math.PI)*16;
+      const dx=cx+LDOT[0]*sc, dy=cy+LDOT[1]*sc + bounce*sc/.42;
+      ctx.fillStyle='#ff8a52'; ctx.shadowColor='rgba(255,138,82,.8)'; ctx.shadowBlur=18;
+      ctx.beginPath(); ctx.arc(dx,dy,19*sc,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+      if(k>=.6 && !introSpark){ introSpark=true; for(let i=0;i<14;i++){ const an=i/14*Math.PI*2; sparks.push({x:dx,y:dy,vx:Math.cos(an)*2.4,vy:Math.sin(an)*2.4,c:COLORS[i%COLORS.length],t:0}); } }
+    }
+    ctx.restore();
+  }
+
   let hudLast='';
   function hudUpdate(){
     if(hud.hidden) return;
@@ -787,12 +830,8 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
     // интро: рой вокруг значка в центре
     const hive={x:W/2 + Math.sin(clock/900)*W*0.12, y:H*0.5 + Math.cos(clock/1100)*H*0.1};
     if(state==='intro'){
-      const a=Math.min(1,clock/300);
-      ctx.globalAlpha=a; ctx.fillStyle='#0a1d42'; ctx.strokeStyle='#3a78ff'; ctx.lineWidth=1;
-      const bx=W/2-15, by=H/2-15; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx,by,30,30,8) : ctx.rect(bx,by,30,30); ctx.fill(); ctx.stroke();
-      ctx.strokeStyle='#9db9ff'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(W/2,H/2,7,clock/200,clock/200+4.6); ctx.stroke();
-      ctx.globalAlpha=1;
-      if(clock>1700){ state='build'; startClock=0; }
+      drawIntro();
+      if(clock>1900){ state='build'; startClock=0; }
     }
     if(state==='build' && !paused){
       spawnJobs();
@@ -826,7 +865,7 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
         k=0.015;
       } else if(state==='intro'){
         const ang=clock/600*(i%2?1:-1)+a.ph, rad=40+a.u*70;
-        tx=W/2+Math.cos(ang)*rad; ty=H/2+Math.sin(ang)*rad*0.7; k=0.009;
+        tx=W/2+Math.cos(ang)*(rad+150); ty=H/2+Math.sin(ang)*(rad+90)*0.62; k=0.009;
       } else if(state==='build' && clock-idleSince>1200){
         if(!a.park) a.park=exitPoint();
         tx=a.park.x; ty=a.park.y; k=0.006;
