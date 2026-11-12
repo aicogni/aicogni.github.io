@@ -46,6 +46,7 @@ body{
   overflow-x:hidden;
   -webkit-font-smoothing:antialiased;
 }
+#grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.045;mix-blend-mode:overlay;background-size:128px 128px}
 #bgfx{position:fixed;inset:0;width:100vw;height:100vh;z-index:-2;pointer-events:none;display:block;background:#2340b8}
 a{color:inherit;text-decoration:none}
 button,input{font:inherit;color:inherit}
@@ -1212,10 +1213,15 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
   const ctx=cv.getContext('2d',{alpha:false});
   const fine=matchMedia('(pointer: fine)').matches;
   const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const SC=fine?8:10;                       // рисуем в 8–10 раз меньше и растягиваем — дёшево и мягко
+  const SC=fine?3:4;                        // рисуем в 3–4 раза меньше экрана и растягиваем — дёшево и без «ступенек»
   let W=0,H=0,w=0,h=0;
   function size(){ W=innerWidth; H=innerHeight; w=Math.ceil(W/SC); h=Math.ceil(H/SC); cv.width=w; cv.height=h; }
   size(); addEventListener('resize',size);
+  // статичное «зерно» поверх фона — прячет ступеньки на плавных переходах
+  (function(){ const n=document.createElement('canvas'); n.width=n.height=128; const x=n.getContext('2d'), d=x.createImageData(128,128);
+    for(let i=0;i<d.data.length;i+=4){ const v=Math.random()*255|0; d.data[i]=d.data[i+1]=d.data[i+2]=v; d.data[i+3]=255; }
+    x.putImageData(d,0,0); const g=document.createElement('div'); g.id='grain'; g.setAttribute('aria-hidden','true');
+    g.style.backgroundImage='url('+n.toDataURL()+')'; cv.after(g); })();
   const blobs=[
     {hx:.05,hy:.04,r:.46,a:1,  ph:0.0,sp:1.0},
     {hx:.84,hy:.70,r:.44,a:1,  ph:2.1,sp:.8},
