@@ -181,10 +181,10 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
 
 /* из референсов — в ролик */
 .refs .sec-head{margin-bottom:48px}
-.flow{position:relative;display:grid;grid-template-columns:minmax(0,380px) 1fr 290px;gap:28px;align-items:center}
+.flow{position:relative;display:grid;grid-template-columns:minmax(0,570px) 1fr 290px;gap:28px;align-items:center}
 #flowFx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
 .flow-cap{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.refgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.refgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .refgrid img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block;background:var(--panel-2)}
 .pipe{display:flex;flex-direction:row;align-items:center;gap:12px;justify-content:center}
 .pipe i{display:block;height:2px;flex:1;background:repeating-linear-gradient(90deg,var(--blue-2) 0 6px,transparent 6px 12px);background-size:24px 2px;animation:flowdashx 1s linear infinite;opacity:.55}
@@ -258,11 +258,11 @@ footer{padding:56px 0 120px;border-top:1px solid var(--line)}
 .point span{color:var(--mute);font-size:14px}
 @media (max-width:1020px){
   .flow{grid-template-columns:1fr;gap:18px}
-  .flow > div:first-child{max-width:380px;width:100%;margin:0 auto}
+  .flow > div:first-child{max-width:570px;width:100%;margin:0 auto}
   .pipe i{max-width:70px}
   .points{grid-template-columns:1fr}
 }
-@media (max-width:620px){ .flow > div:first-child{max-width:290px} .refgrid{gap:6px} .refgrid img{border-radius:8px} .phone{max-width:260px} }
+@media (max-width:620px){ .flow > div:first-child{max-width:100%} .refgrid{gap:6px} .refgrid img{border-radius:8px} .phone{max-width:260px} }
 
 /* ---------- BUILD SYSTEM ---------- */
 .js-build [data-b]{opacity:0}
